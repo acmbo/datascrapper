@@ -3,64 +3,43 @@ Scraper for DW.de Website to collect news articel data in german
 
 """
 
+
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
+from bs4 import element             # Import for Documentation purposes
+from dw.mainpage import find_term_in_bstag_attr, partialfind_term_in_bstag_attr, \
+                        extract_basic_article_meta, extract_main_article_meta
 
 
-def find_term_in_bstag_attr(tags, search_in_attr: str = 'id', searchterm: str = 'bodyContent'):
-    """Searchfunction for searching within attributes of a set of tags found in html through beatifull soup.
-       Returns a list of tags, which have the attribute from "search in attr" with value from "searchterm"
+
+def get_hrefs_of_tags(article_hrefs: element.ResultSet, html_tag: str ="a"):
+    """extracts hrefs from bs4.element
+
     Args:
-        tags (bs4.element.Resultset): list of tags from bs4.find_all(), e.g tag = soup.find_all("div")
-        search_in_attr (str, optional): key/name of attribte to look for. Defaults to 'id'.
-        searchterm (str, optional): Values of attribute, to look for. Defaults to 'bodyContent'.
-    """
-    
-    result = []
-    
-    for tag in tags:
-        
-        try:                # try to acces attributes dictionary
-            if search_in_attr in tag.attrs.keys():
-                
-                if tag.attrs[search_in_attr] == searchterm:
-                    result.append(tag)
-                    
-        except Exception as error:
-            raise Exception('Error encounterd while searching for tags: {s}'.format(s=error))
-    
-    return result  
+        article_hrefs (element.ResultSet): bs4.element containing html
 
-
-def partialfind_term_in_bstag_attr(tags, search_in_attr: str = 'id', searchterm: str = 'bodyContent'):
-    """Searchfunction for searching within attributes of a set of tags found in html through beatifull soup.
-       Returns a list of tags, which have the attribute from "search in attr" with value from "searchterm"
-       
-       Searches with partial string matching.
-       
-    Args:
-        tags (bs4.element.Resultset): list of tags from bs4.find_all(), e.g tag = soup.find_all("div")
-        search_in_attr (str, optional): key/name of attribte to look for. Defaults to 'id'.
-        searchterm (str, optional): Values of attribute, to look for. Defaults to 'bodyContent'.
+    Returns:
+        foundhrefs[list]: list of hrefs
     """
+    foundhrefs = []
     
-    result = []
-    
-    for tag in tags:
+    for tag in article_hrefs:
         
-        try:                # try to acces attributes dictionary
-            if search_in_attr in tag.attrs.keys():
+        sub_tags = tag.find_all(html_tag)
+        
+        for sub_tag in sub_tags:
+        
+            try:
+                foundhrefs.append(sub_tag['href'])
                 
-                if searchterm in tag.attrs[search_in_attr]:
-                    result.append(tag)
-                    
-        except Exception as error:
-            raise Exception('Error encounterd while searching for tags: {s}'.format(s=error))
-    
-    return result  
+            except:
+                continue
+        
+    return foundhrefs
 
 
 if __name__ == '__main__':
+    
     url_source = "https://www.dw.com/"     # Needed fpr building hrefs-urls
     url = "https://www.dw.com/de/"
     page = urlopen(url)
@@ -78,64 +57,41 @@ if __name__ == '__main__':
     soup = BeautifulSoup(html, "html.parser")
     divs = soup.find_all("div")
 
+    #Get Main Body
     body_parts = find_term_in_bstag_attr(divs, search_in_attr='id', searchterm='bodyContent')
-
     body = body_parts[0]
     divs_body = body.find_all("div")
 
 
     articles = []
+    
 
-    #get Mainarticle
+    # Extract metadata from mainarticle
     mainarticle = find_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm=['col4a'])
-
-    # search for content
     mainarticle = mainarticle[0]
     mainarticle_hrefs = mainarticle.find_all("a", href=True)
     
-    dict_mainarticle = {
-        'url':'',
-        'title':'',
-        'subtitle':'',
-        'abstract':'',
-        'mainarticle': True
-    }
+    dict_mainarticle = extract_main_article_meta(mainarticle_hrefs)
+    articles.extend(dict_mainarticle)
+        
+    # Get all Types of article classes on Website
+    attrib_div=[x.attrs for x in partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='easer')]
+    print(list(set([y for x in attrib_div for y in x['class']])))
     
-    for part in mainarticle_hrefs:
-        
-        try:
-            if dict_mainarticle['url'] != part['href'] and part['href'] != '':
-                dict_mainarticle['url'] = part['href']
-        except:
-            dict_mainarticle['url'] = dict_mainarticle['url']
-        
-        try:
-            if dict_mainarticle['title'] != part.find("img")['title'] and part.find("img")['title'] != '':
-                dict_mainarticle['title'] = part.find("img")['title']
-                print(part.find("img")['title'])
-        except:
-            dict_mainarticle['title'] = dict_mainarticle['title']
-        
-        try:
-            if dict_mainarticle['subtitle'] != part.find("h4").text and part.find("h4").text != '':
-                dict_mainarticle['subtitle'] = part.find("h4").text
-        except:
-            dict_mainarticle['subtitle'] = dict_mainarticle['subtitle']
-        
-        try:
-            if part.find("h2").text:
-                dict_mainarticle['subtitle'] += part.find("h2").text
-        except:
-            dict_mainarticle['subtitle'] = dict_mainarticle['subtitle']
-        
-        try:
-            if dict_mainarticle['abstract'] != part.find("p").text and part.find("p").text != '':
-                dict_mainarticle['abstract'] = part.find("p").text
-        except:
-            dict_mainarticle['abstract'] = dict_mainarticle['abstract']
-            
-    articles.append(dict_mainarticle)
-    
+    #Get Basic Teasers
     site_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='basicTeaser')
-
+    site_articles = extract_basic_article_meta(site_div_elements)
+    articles.extend(site_articles)
         
+
+    autTop_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='autoTopicTeaser')
+    hrefs = get_hrefs_of_tags(autTop_div_elements)
+    
+    # ImgTeaser sind social Media verlinkungen
+    # picTea_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='pictureTeaser')
+    #hrefs = get_hrefs_of_tags(picTea_div_elements)
+    
+    #Redaktionsempfehlung
+    artDetT_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='articleDetailTeaser')
+    
+    
