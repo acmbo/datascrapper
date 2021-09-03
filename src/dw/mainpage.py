@@ -7,7 +7,15 @@ Needs HTMl Input from BS4 Python to run.
 
 from bs4 import element             # Import for Documentation purposes
 
-dict_article_structure = {
+
+
+def get_empty_article_meta_data():
+    """returns dictionary for meta data storage of article
+
+    Returns:
+        dict: meta data dictionary of article
+    """
+    dict_article_structure = {
     'url':'',
     'title':'',
     'subtitle':'',
@@ -15,8 +23,15 @@ dict_article_structure = {
     'image_title': '',
     'mainarticle': False,
     'video': False,
-}
-
+    'meistgelesen':False,
+    'redaktionsempfehlung':False,
+    'Datum':'',
+    'Autorin/Autor':'',
+    'Permalink':'',
+    'Themenseiten':'',
+    'Schlagwörter':'',
+    }
+    return dict_article_structure.copy()
 
 
 def find_term_in_bstag_attr(tags: element.ResultSet, search_in_attr: str = 'id', searchterm: str = 'bodyContent'):
@@ -94,7 +109,7 @@ def extract_main_article_meta(mainarticle_hrefs: element.ResultSet):
     
     for part in mainarticle_hrefs:
         
-        dict_mainarticle = dict_article_structure
+        dict_mainarticle = get_empty_article_meta_data()
 
         try:
             if dict_mainarticle['url'] != part['href'] and part['href'] != '':
@@ -151,7 +166,7 @@ def extract_basic_article_meta(article_hrefs: element.ResultSet):
     
     for part in article_hrefs:
   
-        dict_article = dict_article_structure
+        dict_article = get_empty_article_meta_data()
         
         try:
             token = part.find('a')['href']
