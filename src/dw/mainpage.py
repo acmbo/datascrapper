@@ -30,6 +30,7 @@ def get_empty_article_meta_data():
     'Permalink':'',
     'Themenseiten':'',
     'Schlagwörter':'',
+    'Artikel':'',
     }
     return dict_article_structure.copy()
 
