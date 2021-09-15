@@ -63,10 +63,11 @@ def get_hrefs_of_tags(article_hrefs: element.ResultSet, html_tag: str ="a"):
 
 
 
-def scrape_dw_theme_page(url: str,url_source: str):
+def scrape_dw_theme_page(html:str, url: str,url_source: str):
     """Scrapes a theme/main page of dw and returns list of found articles
 
     Args:
+        html (str): html text of the website as string
         url (str): url of theme page
         url_source (str): base of url of dw.com for constructing further child urls
 
@@ -74,16 +75,16 @@ def scrape_dw_theme_page(url: str,url_source: str):
         (list) : list of article meta data dictinionarys
     """
 
-    page = urlopen(url)
+    #page = urlopen(url)
 
-    html_bytes = page.read()
-    html = html_bytes.decode("utf_8")
+    #html_bytes = page.read()
+    #html = html_bytes.decode("utf_8")
 
     #get Title
-    html.find("<title>")
-    start_index = html.find("<title>") + len("<title>")
-    end_index = html.find("</title>")
-    title = html[start_index:end_index]
+    #html.find("<title>")
+    #start_index = html.find("<title>") + len("<title>")
+    #end_index = html.find("</title>")
+    #title = html[start_index:end_index]
 
 
     soup = BeautifulSoup(html, "html.parser")
@@ -173,14 +174,21 @@ def scrape_dw_theme_page(url: str,url_source: str):
     
     return articles
     
+    
 if __name__ == '__main__':
     
     url_source = "https://www.dw.com/"     # Needed fpr building hrefs-urls
     #url = "https://www.dw.com/de/"
     url = "https://www.dw.com/de/themen/welt/s-100029"
     
-    
-    articles = scrape_dw_theme_page(url,url_source)
+    page = urlopen(url)
+
+    html_bytes = page.read()
+    html = html_bytes.decode("utf_8")
+
+    #get Title
+   
+    articles = scrape_dw_theme_page(html, url,url_source)
     
     
     import time
