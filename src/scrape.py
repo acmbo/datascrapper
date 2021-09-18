@@ -178,8 +178,8 @@ def scrape_dw_theme_page(html:str, url: str,url_source: str):
 if __name__ == '__main__':
     
     url_source = "https://www.dw.com/"     # Needed fpr building hrefs-urls
-    #url = "https://www.dw.com/de/"
-    url = "https://www.dw.com/de/themen/welt/s-100029"
+    url = "https://www.dw.com/de/"
+    #url = "https://www.dw.com/de/themen/welt/s-100029"
     
     page = urlopen(url)
 

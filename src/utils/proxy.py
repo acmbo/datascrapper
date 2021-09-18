@@ -6,10 +6,31 @@ from torpy import TorClient
 from torpy.utils import recv_all
 from torpy.http import requests as tor_request
 from torpy.http.adapter import TorHttpAdapter
+from urllib.request import urlopen
 
+
+def local_request(url:str):
+    
+    try:
+        page = urlopen(url)
+
+        html_bytes = page.read()
+        html = html_bytes.decode("utf_8")
+        return html
+    
+    except:
+        return None
 
 
 def get_html_via_tor(url: str):
+    """Reqeust via Tor to get html from url website
+
+    Args:
+        url (str): target url as string
+
+    Returns:
+        (str): html as string or None if reqeust couldnt processed
+    """
     
     try:
         with TorClient() as tor:
@@ -33,6 +54,14 @@ def get_html_via_tor(url: str):
                 
 
 def get_multiple_html_via_tor(urls: list):
+    """Request  Website via Tor for multiple urls, which are stored in a list
+
+    Args:
+        urls (list): list of urls, saved as strings
+
+    Returns:
+        (list): list of extracted html as string or None, if request couldnt processed
+    """
     
     return_list = []
     

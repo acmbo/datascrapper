@@ -1,4 +1,4 @@
-
+"""Implementation of Mongodb for a local database"""
 
 def get_db():
     from pymongo import MongoClient
@@ -11,13 +11,22 @@ def add_article(db, article):
     db.dw.insert_one(article)
     
     
-def get_dw_articles(db):
+def get_first_dw_articles(db):
     return db.dw.find_one()
+
+
+def get_dw_article_by_url(db, url):
+    return [match for match in db.dw.find({"url":url})]
+
+
+def amount_of_articles_exist(db):
+    return db.dw.count_documents({})
 
 
 def check_url_exist(db, url):
     return db.dw.count_documents({"url":url})>0
-    
+   
+ 
 def update_article(db,url,article):
     db.dw.update_one({'url': url}, 
                      {"$set": {"newfield": "abc"}}, 
@@ -54,7 +63,9 @@ if __name__ == "__main__":
                     'Article_Scene': 'Die Redaktion empfiehlt'}}
     
     add_article(db, test_article)
-    x = get_dw_articles(db)
+    
+    x = get_first_dw_articles(db)
+    
     update_article(db,'/de/wird-russland-belarus-schlucken/a-59181798',"")
 
 
