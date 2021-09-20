@@ -1,6 +1,6 @@
 """Helperfunctions to process extracetd article meta data"""
 
-from mainpage import get_empty_article_meta_data
+from dw.mainpage import get_empty_article_meta_data
 
 def add_value_to_article_key(articles:list, 
                                 key:str, 

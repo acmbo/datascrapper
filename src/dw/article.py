@@ -36,25 +36,19 @@ def get_article_text(longtext: element.ResultSet):
 
 
 
-def extract_article_data(article: dict, url_source: str):    
+def extract_article_data(article: dict, html:str):    
+    """extracts data from html text of a dw article and adds it
+    to the article meta data, stored in the dictionary which is given
+
+    Args:
+        article (dict): [description]
+        url_source (str): [description]
+        html (str): [description]
+
+    Returns:
+        [type]: [description]
+    """
     
-    
-    #Get Website HTML  
-    new_url_string = url_source + article['url'][1:]
-    #new_url_string = new_url_string.encode('utf-8')
-    new_url_string = new_url_string.encode("ascii",'ignore')
-    page = urlopen(new_url_string.decode('ascii'))
-
-    html_bytes = page.read()
-    html = html_bytes.decode("utf8")
-
-    #get Title
-    html.find("<title>")
-    start_index = html.find("<title>") + len("<title>")
-    end_index = html.find("</title>")
-    title = html[start_index:end_index]     # html title
-
-
     soup = BeautifulSoup(html, "html.parser")
     divs = soup.find_all("div") 
     body = partialfind_term_in_bstag_attr(divs, search_in_attr='id', searchterm='bodyContent')  

@@ -63,7 +63,7 @@ def get_hrefs_of_tags(article_hrefs: element.ResultSet, html_tag: str ="a"):
 
 
 
-def scrape_dw_theme_page(html:str, url: str,url_source: str):
+def scrape_dw_theme_page(html:str):
     """Scrapes a theme/main page of dw and returns list of found articles
 
     Args:
@@ -188,20 +188,6 @@ if __name__ == '__main__':
 
     #get Title
    
-    articles = scrape_dw_theme_page(html, url,url_source)
+    articles = scrape_dw_theme_page(html)
     
     
-    import time
-    
-    for i in range(0,5):
-        
-
-        time.sleep(2)
-        continue
-    
-    
-    # extract Article Data
-    i=0
-
-
-    articles[0] = extract_article_data(articles[0], url_source)
