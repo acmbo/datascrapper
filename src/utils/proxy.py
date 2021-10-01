@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 
 
 
-def proxy_rotation(**kwargs):
+def choose_proxy_from_proxyrotation(**kwargs):
     """function for rotating proxys, through using a random variable between 0 and 1
         the proxys have a probablity as float between 0 and 1 and if the random variable
         falls between the probabiltys of the respectiv functions, the function is returned.

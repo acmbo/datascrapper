@@ -18,6 +18,7 @@ def get_first_dw_articles(db):
 def get_dw_article_by_url(db, url):
     return [match for match in db.dw.find({"url":url})]
 
+
 def get_all_dw_article(db):
     return [match for match in db.dw.find({})]
 
