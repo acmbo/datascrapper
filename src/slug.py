@@ -239,103 +239,36 @@ def crawl_dw():
             print("url in db found")
     
 
+if __name__ == "__main__":
 
-TIME = get_actual_datetime()
-LASTACTIVETIME = get_actual_datetime()
-NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
-STARTHOUR = int(20+random.random()*4)
-STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
-print(STARTHOUR)
-print(STARTTIMEONNEWDAY)
-
-GLOBAL_RUN = True
-
-
-
-while GLOBAL_RUN:
-
-    TIME = get_actual_datetime()    
+    TIME = get_actual_datetime()
+    LASTACTIVETIME = get_actual_datetime()
     NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
-    
-    if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
-        
-        crawl_dw()
-        
-        LASTACTIVETIME = get_actual_datetime()
-        
-        # Data for next run
-        STARTHOUR = int(20+random.random()*4)
-        STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
+    STARTHOUR = int(20+random.random()*4)
+    STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
+    print(STARTHOUR)
+    print(STARTTIMEONNEWDAY)
+
+    GLOBAL_RUN = True
 
 
-    
-    
-    
-    
-    
-    
-    #else:      
-    #    print("state 4")
-    #    random_int = random.randint(2,10)
-    #    backed_arts.append((art,idx))
-    
-    """
-    if random_int == 0:
-            
-        proxy = proxy_rotation()
-        print("proxy with {s} url".format(s=proxy[1]))
-        #if proxy can work with 1 url, if yes extract html
-        #if proxy[1] == 1:
-            
-        print("state 1")
-        
-        if check_url_exist(db,art['url']) == False:
-            
-            time.sleep(random.randint(3,10))
 
+    while GLOBAL_RUN:
+
+        TIME = get_actual_datetime()    
+        NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
+        
+        if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
             
-            try:
-                html = proxy[0](url_source + art['url'])
-                #
-                extracted_articles[idx] = preprocess_meta_data(extract_article_data(art, html))
-                add_article(db, extracted_articles[idx])
-                print("used function " + str(proxy[0]))
-            except:
-                print("error")
-        else:
-            print("url in db found")
-        
-        #else:      
-        #    print("state 4")
-        #    random_int = random.randint(2,10)
-        #    backed_arts.append((art,idx))
-        
-    #####muss geprüft werden!
-    elif len(backed_arts)==random_int:
-        
-        print("state 3")
-        
-        try:
-            time.sleep(random.randint(3,10))
-    
-            list_of_html = proxy[0](url_source + sub_url[0]["url"] for sub_url in backed_arts)
+            crawl_dw()
             
-            for extraced_solo_article, backed_art in zip(list_of_html, backed_arts):
-                extracted_articles[backed_arts[1]] = preprocess_meta_data(extract_article_data(backed_arts[0], extraced_solo_article))
-                add_article(db, extracted_articles[backed_arts[1]])
+            LASTACTIVETIME = get_actual_datetime()
             
-        except:
-            print("error " + str(random_int))
-        
-        #restore default status
-        random_int = 0
-        backed_arts = []
-            
-    elif len(backed_arts) < random_int and random_int > 0:
-        print("state 2")
-        backed_arts.append(art)
-    """
-        
+            # Data for next run
+            STARTHOUR = int(20+random.random()*4)
+            STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
+
+
             
     
     
