@@ -40,7 +40,7 @@ def update_article(db,url,article):
 
 if __name__ == "__main__":
 
-    db = get_db() 
+    db, client = get_db() 
     
     test_article = {'url': '/de/wird-russland-belarus-schlucken/a-59181798',
                     'title': '<h2>Wird Russland Belarus schlucken? </h2>',
@@ -74,3 +74,4 @@ if __name__ == "__main__":
     update_article(db,'/de/wird-russland-belarus-schlucken/a-59181798',"")
 
 
+    
