@@ -1,12 +1,15 @@
-# Kicker Scraper Repo
+# DW scraper Repo
 
 Websitescrape to gather data from German news websitese dw.com/dw. The project aims to create a database out of:
   * articles
   * keywords
   * article meta: author, post date, recomendations
 
+## Project structure
 
-# Setup Databases
+[Follows..]
+
+## Setup Databases
 
 The Scrapper can utilize two kinds of databases:
 -mongodb
@@ -16,7 +19,7 @@ Both are NoSQL Databases, which can operate on different system and can be used 
 Several different hardware architectures were avialbe at the beginning of the project (RaspberryPi ARM32 and Normal Ubuntu Server 64bit), so different implementations were needed.
 
 
-## Setting up the database structure
+### Setting up the database structure
 
 Setting up the mongodb is straight forward.
 
