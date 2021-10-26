@@ -5,7 +5,7 @@ from utils.proxy import choose_proxy_from_proxyrotation
 from scrape_dw import scrape_dw_theme_page
 from dw.utils_article import remove_double_entrys_in_article
 from dw.article import extract_article_data
-from db.dw_db import get_db, add_article, check_url_exist
+from db.mongo import get_db, add_article, check_url_exist
 
 
 def float_to_timeformat_of_day(random_time_of_day: float):
