@@ -5,7 +5,8 @@ from utils.proxy import choose_proxy_from_proxyrotation
 from scrape_dw import scrape_dw_theme_page
 from dw.utils_article import remove_double_entrys_in_article
 from dw.article import extract_article_data
-from db.mongo import get_db, add_article, check_url_exist
+#from db.mongo import get_db, add_article, check_url_exist
+from db.redis_dw import get_db, add_article, check_url_exist
 
 
 def float_to_timeformat_of_day(random_time_of_day: float):
@@ -225,13 +226,13 @@ def crawl_dw():
             
             print("sleeping..")
             time.sleep(random.randint(3,10))
-
+            print("Article extracted, used function " + str(proxy[0]))
+            
             try:
                 html = proxy[0](url_source + art['url'])
                 extracted_articles[idx] = preprocess_meta_data(extract_article_data(art, html))
                 add_article(db, extracted_articles[idx])
-                print("Article extracted, used function " + str(proxy[0]))
-            
+                
             except:
                 print("error")
                 

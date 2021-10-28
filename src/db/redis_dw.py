@@ -1,6 +1,8 @@
 import redis
 import pickle
 
+REDISDB = 1
+
 def preprocess_for_redis(article_dict):
     pickled_object = pickle.dumps(article_dict)
     return pickled_object
@@ -10,7 +12,7 @@ def preprocess_from_redis(db_value):
     return pickle.loads(db_value)
 
 
-def get_db(db_number=0):
+def get_db(db_number=REDISDB):
     db = redis.Redis(host='localhost', port=6379, db=db_number)
     return db
 
