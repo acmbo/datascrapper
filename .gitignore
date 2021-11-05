@@ -138,3 +138,6 @@ celerybeat.pid
 
 #VSCodedata
 *.code-workspace
+
+#Local content
+settings.py
