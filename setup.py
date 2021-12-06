@@ -12,5 +12,7 @@ setup(name='datascrapper',
                 'random',
                 'urllib',
                 'beautifulsoup4',
-                'torpy'],
+                'torpy',
+                'redis',
+                'datetime'],
      )

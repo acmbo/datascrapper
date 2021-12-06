@@ -1,6 +1,7 @@
 import requests
 import time
 import random
+import logging
 from utils.settings import API_KEY, API_KEY_SCRAPPERYPI
 from torpy import TorClient
 from torpy.utils import recv_all
@@ -9,6 +10,19 @@ from torpy.http.adapter import TorHttpAdapter
 from urllib.request import urlopen
 from urllib.parse import urlencode
 
+
+
+_filepath = "slug.log"
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(name)s: %(funcName)s: %(message)s")
+
+file_handler = logging.FileHandler(_filepath) 
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(logging.StreamHandler())
 
 
 def choose_proxy_from_proxyrotation(**kwargs):
@@ -102,8 +116,10 @@ def get_html_via_tor(url: str):
                         return resp.text
                     
                     else:
+                        logger.warning("GET Response: {s}".format(s=resp.status_code))
                         return None
-    except:
+    except Exception as e:
+        logger.warning("GET Response: None - {e}".format(e=e))
         return None
                 
 
@@ -139,13 +155,15 @@ def get_multiple_html_via_tor(urls: list):
                             return_list.append(resp.text)
                         
                         else:
+                            logger.warning("GET Response: {s}".format(s=resp.status_code))
                             return_list.append(None)
                             
                         time.sleep(random.randint(15,30))
         
         return return_list
     
-    except:
+    except Exception as e:
+        logger.warning("GET Response: None - {e}".format(e=e))
         return None
             
 
@@ -161,16 +179,45 @@ def get_proxy_data_from_pubproxy():
     try:
         response = requests.get(url)   
         
-    except:
+    except Exception as e:
+        logger.warning("GET Response: None - {e}".format(e=e))
         return None
     
     if response.status_code == 200:
         return response.json()
     else:
+        logger.warning("GET Response: {s}".format(s=response.status_code))
         return None
 
 
 def get_html_via_webscrapingapi(url: str, **kwargs):
+    
+
+    url = requests.utils.quote(url)
+    url = url.replace("/","%2F")
+    url = "https://api.webscrapingapi.com/v1?api_key={_apikey}&url={_url}&method=GET&device=desktop&proxy_type=datacenter".format(_apikey=API_KEY, _url=url)
+    
+    #url="https://api.webscrapingapi.com/v1?api_key=hgN70EY3fzdXroBwH7rvT5YYX4hzWydV&url=https%3A%2F%2Fwww.dw.com%2F&method=GET&device=desktop&proxy_type=datacenter"
+    #print(url)
+    try:
+        response = requests.get(url.encode())
+    except Exception as e:
+        logger.warning("GET Response: None - {e}".format(e=e))
+        return None
+    
+        
+    
+    try:
+        if response.status_code == 200:
+            return response.text
+        
+    except:
+        logger.warning("GET Response: {s}".format(s=response.status_code))
+        return None
+    
+    
+
+def get_html_via_webscrapingapi_depricated(url: str, **kwargs):
     """get html text as str from an website via webscraping api
     from https://api.webscrapingapi.com
 
@@ -198,10 +245,11 @@ def get_html_via_webscrapingapi(url: str, **kwargs):
             return response.text
             
         else:
-            print("GET Response: {s}".format(s=response.status_code))
+            logger.warning("GET Response: {s}".format(s=response.status_code))
             return None
         
-    except:
+    except Exception as e:
+        logger.warning("GET Response: None - {e}".format(e=e))
         return None
 
 
@@ -236,10 +284,11 @@ def get_html_via_scrapingapi(url: str, **kwargs):
             return response.text
             
         else:
-            print("GET Response: {s}".format(s=response.status_code))
+            logger.warning("GET Response: {s}".format(s=response.status_code))
             return None
         
-    except:
+    except Exception as e:
+        logger.warning("GET Response: None - {e}".format(e=e))
         return None
 
 
@@ -255,9 +304,26 @@ if __name__=="__main__":
     if html != None:
         soup = BeautifulSoup(html, "html.parser")
         divs = soup.find_all("div")
-        print("sucess")
+        print("scrapingapi sucess")
     else:
-        print("No Return")
+        print("scrapingapiNo Return")
 
 
+    html = get_html_via_tor(url)
+    if html != None:
+        soup = BeautifulSoup(html, "html.parser")
+        divs = soup.find_all("div")
+        print("tor sucess")
+    else:
+        print("tor No Return")
+        
+    html = get_html_via_webscrapingapi(url)
+    if html != None:
+        soup = BeautifulSoup(html, "html.parser")
+        divs = soup.find_all("div")
+        print("webscrapingapi sucess")
+    else:
+        print("webscrapingapi No Return")
 
+
+    

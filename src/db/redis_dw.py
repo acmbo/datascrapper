@@ -1,16 +1,73 @@
 import redis
 import pickle
+import logging
+
+_filepath = "slug.log"
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(name)s: %(funcName)s: %(message)s")
+
+file_handler = logging.FileHandler(_filepath) 
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(logging.StreamHandler())
 
 REDISDB = 1
 
-def preprocess_for_redis(article_dict):
-    pickled_object = pickle.dumps(article_dict)
-    return pickled_object
+
+def preprocess_for_redis(article_dict, pickle_all=False):
+    """Preprccessing for redis. Redis cant store lists or dictionary with multiple layers. 
+    therefore pickle is used to store a complete dictionary with multiple layers through pickeling
+    or as a second variant store multilayerd parts of a dictionary as bytes.
+
+    Args:
+        article_dict (dict): article data
+        pickle_all (bool, optional): Marker which cpreporcessing should be used. Defaults to False.
+
+    Returns:
+        dict: preprocessed dictionaryy
+    """
+    if pickle_all==True:
+        pickled_object = pickle.dumps(article_dict)
+        return pickled_object
+    
+    else:
+        preprocessed_dict = {}
+        
+        for key, item in article_dict.items():
+            
+            if type(item) in [tuple,list,dict]:
+                preprocessed_dict[key] = pickle.dumps(item)
+                
+            elif type(item) in [float,int,str, bytes, complex]:         
+                preprocessed_dict[key] = item
+               
+            elif type(item) in [bool]:
+                preprocessed_dict[key] = int(item)
+            else:
+                preprocessed_dict[key] = None
+                logger.warning('Unkown Datatype {s} encountered in Preprocessing'.format(s=str(type(item))))
+
+                
+        return preprocessed_dict            
+        
+    #print(str(key) + ' ' + str(item))
 
 
 def preprocess_from_redis(db_value):
     return pickle.loads(db_value)
 
+def preprocess_from_redis_hget(db_dict):
+    preprocessed_dict = {}
+    for key, val in db_dict.items():
+        try:
+            preprocessed_dict[key.decode()] = val.decode()
+        except:
+            preprocessed_dict[key.decode()] = pickle.loads(val)
+            
+    return preprocessed_dict
 
 def get_db(db_number=REDISDB):
     db = redis.Redis(host='localhost', port=6379, db=db_number)
@@ -18,16 +75,37 @@ def get_db(db_number=REDISDB):
 
 
 def add_article(db, article):
-    db.set(article["url"], preprocess_for_redis(article))
+    db.set(article["url"], preprocess_for_redis(article, pickle_all=True))
     
     
+def add_article_hashset(db, article):
+    """Adds Entry to redis db with hastset, which behaves like a python dictionary. (Keine verschachtelung möglich 
+    in den Dictionarys, deswegen werden Einträge im Preprocess mit pickle gepickeld)
+
+    Args:
+        db (conn): Database connection in redis
+        article (dict): article Data
+    """
+    
+    for key, item in preprocess_for_redis(article, pickle_all=False).items():
+
+        try:
+            db.hset(article["url"], key, item)
+            
+        except Exception as dberror:
+            logger.error("Error Redis add article with hashset: \n {e} \n -----------------------------".format(e=dberror))
+            #print((key,item))
     
 def get_first_dw_articles(db):
     pass
 
 
-def get_dw_article_by_url(db, url):
-    return [preprocess_from_redis(db.get(url))]
+def get_dw_article_by_url(db, url, hset=True):
+    if hset == True:
+        return preprocess_from_redis_hget(db.hgetall(url))
+    else:
+        return [preprocess_from_redis(db.get(url))]
+    
 
 
 def get_all_dw_article(db):
@@ -53,7 +131,7 @@ def update_article(db,url,article):
 if __name__ == "__main__":
 
         
-    db = get_db() 
+    db = get_db(db_number=0) 
 
     test_article = {'url': '/de/wird-russland-belarus-schlucken/a-59181798',
                     'title': '<h2>Wird Russland Belarus schlucken? </h2>',
@@ -80,6 +158,6 @@ if __name__ == "__main__":
                     'Title': 'Wird Russland Belarus schlucken?',
                     'Article_Scene': 'Die Redaktion empfiehlt'}}
 
-    add_article(db, test_article)
+    add_article_hashset(db, test_article)
     get_dw_article_by_url(db, '/de/wird-russland-belarus-schlucken/a-59181798')
     check_url_exist(db,'/de/wird-russland-belarus-schlucken/a-59181798')
