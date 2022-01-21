@@ -154,10 +154,15 @@ def crawl_dw():
             
             try:
                 html = proxy[0](url_source + art['url'])
-                extracted_articles[idx] = preprocess_meta_data(extract_article_data(art, html))
-                add_article_hashset(db, extracted_articles[idx])
-                logger.info(" -- Sucessfull scraped {url} -- ".format(url=url_source + art['url']))
                 
+                if html is None:
+                    logger.error("Error in Slug: Empty html.  {url}\n ".format(
+                                                                    url=str(url_source + art['url'])))
+                else: 
+                    extracted_articles[idx] = preprocess_meta_data(extract_article_data(art, html))
+                    add_article_hashset(db, extracted_articles[idx])
+                    logger.info(" -- Sucessfull scraped {url} -- ".format(url=url_source + art['url']))
+                    
             except Exception as e:
                 logger.error("Error in Slug: {url} = \n {e} ".format(e=e,
                                                                      url=str(url_source + art['url'])))
