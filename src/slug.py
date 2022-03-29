@@ -67,7 +67,7 @@ def extract_articles_from_urlist_of_dw_theme_pages(urls: list):
             
             logger.info("sleeping...")
             
-            time.sleep(random.randint(10,30))
+            time.sleep(random.randint(5,10))
             
             choosen_proxy = choose_proxy_from_proxyrotation()
             
@@ -145,8 +145,8 @@ def crawl_dw():
         
         if check_url_exist(db,art['url']) == False:
             
-            logger.info("sleeping..")
-            time.sleep(random.randint(3,10))
+            #logger.info("sleeping..")
+            #time.sleep(random.randint(3,10))
             logger.info("Article extracted, used function " + str(proxy[0]))
             
             print(idx)
@@ -178,17 +178,17 @@ if __name__ == "__main__":
     TIME = get_actual_datetime()
     LASTACTIVETIME = get_actual_datetime()
     NEWDAY = True
-    #STARTHOUR = int(20+random.random()*4)
-    STARTHOUR = 19
+    STARTHOUR = int(20+random.random()*4)
+    #STARTHOUR = 13
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
-                                                    minutes=28)
+                                                    )
                             
 
     GLOBAL_RUN = True
 
     while GLOBAL_RUN:
         
-        #crawl_dw()
+        crawl_dw()
 
         TIME = get_actual_datetime()    
         

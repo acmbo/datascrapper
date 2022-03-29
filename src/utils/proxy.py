@@ -43,11 +43,11 @@ def choose_proxy_from_proxyrotation(**kwargs):
     
     #dictionary with proxy functions, amount of processed urls and probablity
     proxy_dict = {
-        "local_request": Proxy(local_request, 1, 0.1),
-        "get_html_via_tor" : Proxy(get_html_via_tor, 1, 0.1),
+        "local_request": Proxy(local_request, 1, 0.6), #0.1),
+        "get_html_via_tor" : Proxy(get_html_via_tor, 1, 0.4), #0.1),
         "get_multiple_html_via_tor": Proxy(get_multiple_html_via_tor,'multi', 0.0),
-        "get_html_via_webscrapingapi": Proxy(get_html_via_webscrapingapi, 1, 0.4),
-        "get_html_via_scrapingapi": Proxy(get_html_via_scrapingapi, 1, 0.4)
+        "get_html_via_webscrapingapi": Proxy(get_html_via_webscrapingapi, 1, 0.0),  #0.4),
+        "get_html_via_scrapingapi": Proxy(get_html_via_scrapingapi, 1, 0.0), #0.4)
     }
     
     #Update probabilitys if passed through kwargs
