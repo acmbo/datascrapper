@@ -120,16 +120,19 @@ def get_first_dw_articles(db):
 
 
 def get_dw_article_by_url(db, url, hset=True):
-    if hset == True:
-        return preprocess_from_redis_hget(db.hgetall(url))
-    else:
-        return [preprocess_from_redis(db.get(url))]
+    try:
+        if hset == True:
+            return preprocess_from_redis_hget(db.hgetall(url))
+        else:
+            return [preprocess_from_redis(db.get(url))]
+    except Exception as e:
+        print(Exception)
+        return None
     
 
 
 def get_all_dw_article(db):
     return [keys for keys in db.scan_iter(match='*')]
-
 
 
 def amount_of_articles_exist(db):
@@ -150,6 +153,8 @@ def savedb(db):
     """Creates hardsiks backup"""
     db.bgsave()
     return 0
+
+
 
 
 if __name__ == "__main__":
