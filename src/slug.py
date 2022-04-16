@@ -15,6 +15,12 @@ from db.redis_dw import get_db, add_article_hashset, check_url_exist
 logger = createStandardLogger(__name__)
 
 
+local_request = proxy_probabiltys["local_request"]
+get_html_via_tor = proxy_probabiltys["get_html_via_tor"]
+get_html_via_webscrapingapi = proxy_probabiltys["get_html_via_webscrapingapi"]
+get_html_via_scrapingapi = proxy_probabiltys["get_html_via_scrapingapi"]
+
+
 def preprocess_meta_data(article: dict):
     """preprocesses the data inside article dictionary for later
        readybilty within python. Changes not python standard datatypes
@@ -66,11 +72,16 @@ def extract_articles_from_urlist_of_dw_theme_pages(urls: list):
         
         while run:
             
-            logger.info("sleeping...")
+            sleeptime = random.randint(5,10)
             
-            time.sleep(random.randint(5,10))
+            logger.info("sleeping {num} secs...".format(num=sleeptime))
             
-            choosen_proxy = choose_proxy_from_proxyrotation(proxy_probabiltys)
+            time.sleep(sleeptime)
+            
+            choosen_proxy = choose_proxy_from_proxyrotation(local_request=local_request,
+                                                            get_html_via_tor=get_html_via_tor,
+                                                            get_html_via_webscrapingapi=get_html_via_webscrapingapi,
+                                                            get_html_via_scrapingapi=get_html_via_scrapingapi)
             
             logger.info("scraping with {prox}".format(prox = str(choosen_proxy[0])))
             
@@ -99,7 +110,8 @@ def get_dw_front_pages_data():
             "https://www.dw.com/de/themen/wissen-umwelt/s-12296",
             "https://www.dw.com/de/themen/kultur/s-1534",
             "https://www.dw.com/de/themen/sport/s-12284",
-            "https://www.dw.com/de/themen/welt/s-100029"]
+            "https://www.dw.com/de/themen/welt/s-100029",
+            "https://www.dw.com/de/wirtschaft/s-1503"]
 
 
 
@@ -114,6 +126,37 @@ def get_dw_front_pages_data():
     return extracted_articles
 
 
+def execute_get_request_article(proxy_func, _url_source, article, _db, extracted_articles, idx):
+    """Execution of request for article
+
+    Args:
+        proxy_func (func): choosen proxyfunction
+        _url_source (str): source url of dw website
+        article (dict): article dictionary
+        _db (redis.db): instance redis db
+        extracted_articles(list): current articles list
+        idx(int): current index
+    """
+    try:
+        html = proxy_func(_url_source + article['url'])
+        
+        if html is None:
+            logger.error("Error in Slug: Empty html.  {url}\n ".format(
+                                                            url=str(_url_source + article['url'])))
+            return 1, extracted_articles
+            
+        else: 
+            extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
+            add_article_hashset(_db, extracted_articles[idx])
+            logger.info(" -- Sucessfull scraped {url} -- ".format(url=_url_source + article['url']))
+            return 0, extracted_articles
+            
+    except Exception as e:
+        logger.error("Error in Slug: {url} = \n {e} ".format(e=e,
+                                                            url=str(_url_source + article['url'])))
+        return 1, extracted_articles
+        
+
 
 def crawl_dw():
     """crwals dw front page and article pages and add articles as html and textformat to a mongodb
@@ -126,47 +169,72 @@ def crawl_dw():
     extracted_articles = get_dw_front_pages_data()
     logger.info(" -- Sucessfull scraped mainpages-- ")
 
-    #Conect to mongodb and preqesiuts
+    #Conect to redisdb and preqesiuts
     db = get_db() 
 
     #random_int = 0  #commented out from former version of the script
 
-    proxy = choose_proxy_from_proxyrotation(proxy_probabiltys)    # load a proxy for consistency of code
+    proxy = choose_proxy_from_proxyrotation(local_request=local_request,
+                                            get_html_via_tor=get_html_via_tor,
+                                            get_html_via_webscrapingapi=get_html_via_webscrapingapi,
+                                            get_html_via_scrapingapi=get_html_via_scrapingapi)    # load a proxy for consistency of code
     backed_arts = []
 
     #TO DO
     # - alle states überprüfen
     # - picture seiten werden nicht korrekt gesrapped
     
+    logger.info("Number of Articles found: {num}".format(num=len(extracted_articles)))
+    
     for idx, art in enumerate(extracted_articles):
         
-        proxy = choose_proxy_from_proxyrotation(proxy_probabiltys) 
+        proxy = choose_proxy_from_proxyrotation(local_request=local_request,
+                                                get_html_via_tor=get_html_via_tor,
+                                                get_html_via_webscrapingapi=get_html_via_webscrapingapi,
+                                                get_html_via_scrapingapi=get_html_via_scrapingapi) 
         logger.info("proxy with {s} url".format(s=proxy[1]))
     
         
         if check_url_exist(db,art['url']) == False:
             
-            #logger.info("sleeping..")
-            #time.sleep(random.randint(3,10))
+            sleeptime = random.randint(3,10)
+            
+            logger.info("sleeping {num} secs...".format(num=sleeptime))
+            
+            time.sleep(sleeptime)
+            
             logger.info("Article extracted, used function " + str(proxy[0]))
             
-            print(idx)
-            print(extracted_articles[idx])
+            print(extracted_articles[idx]['url'])
             
-            try:
-                html = proxy[0](url_source + art['url'])
+            status , extracted_articles = execute_get_request_article(proxy_func = proxy[0],
+                                        _url_source=url_source,
+                                        article=art,
+                                        _db = db,
+                                        extracted_articles=extracted_articles,
+                                        idx=idx)
+            
+            if status == 1:
+                # Try again, if proxy malfunctioned
                 
-                if html is None:
-                    logger.error("Error in Slug: Empty html.  {url}\n ".format(
-                                                                    url=str(url_source + art['url'])))
-                else: 
-                    extracted_articles[idx] = preprocess_meta_data(extract_article_data(art, html))
-                    add_article_hashset(db, extracted_articles[idx])
-                    logger.info(" -- Sucessfull scraped {url} -- ".format(url=url_source + art['url']))
+                proxy = choose_proxy_from_proxyrotation(local_request=local_request,
+                                        get_html_via_tor=get_html_via_tor,
+                                        get_html_via_webscrapingapi=get_html_via_webscrapingapi,
+                                        get_html_via_scrapingapi=get_html_via_scrapingapi) 
+                
+                logger.warning("Empty html. Try with new created proxy -" + str(proxy[0]))
+                
+                status , extracted_articles = execute_get_request_article(proxy_func = proxy[0],
+                            _url_source=url_source,
+                            article=art,
+                            _db = db,
+                            extracted_articles=extracted_articles,
+                            idx=idx)
+                
+                if status==1:
                     
-            except Exception as e:
-                logger.error("Error in Slug: {url} = \n {e} ".format(e=e,
-                                                                     url=str(url_source + art['url'])))
+                    logger.error("Still empty html.")
+                    
                 
         else:
             logger.info("url in db found")
