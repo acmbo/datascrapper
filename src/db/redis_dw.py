@@ -126,6 +126,10 @@ def update_article(db,url,article):
                      {"$set": {"newfield": "abc"}}, 
                      upsert=False)
 
+def savedb(db):
+    """Creates hardsiks backup"""
+    db.bgsave()
+    return 0
 
 
 if __name__ == "__main__":

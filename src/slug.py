@@ -4,6 +4,7 @@ from utils.proxy import choose_proxy_from_proxyrotation
 from utils.time import time_is_passed_by_actualTime, \
     select_random_time_of_a_day, get_actual_datetime, check_change_of_day_in_datetimevalues
 from utils.loggers import createStandardLogger    
+from utils.settings import proxy_probabiltys
 from scrape_dw import scrape_dw_theme_page
 from dw.utils_article import remove_double_entrys_in_article
 from dw.article import extract_article_data
@@ -69,7 +70,7 @@ def extract_articles_from_urlist_of_dw_theme_pages(urls: list):
             
             time.sleep(random.randint(5,10))
             
-            choosen_proxy = choose_proxy_from_proxyrotation()
+            choosen_proxy = choose_proxy_from_proxyrotation(proxy_probabiltys)
             
             logger.info("scraping with {prox}".format(prox = str(choosen_proxy[0])))
             
@@ -130,7 +131,7 @@ def crawl_dw():
 
     #random_int = 0  #commented out from former version of the script
 
-    proxy = choose_proxy_from_proxyrotation()    # load a proxy for consistency of code
+    proxy = choose_proxy_from_proxyrotation(proxy_probabiltys)    # load a proxy for consistency of code
     backed_arts = []
 
     #TO DO
@@ -139,7 +140,7 @@ def crawl_dw():
     
     for idx, art in enumerate(extracted_articles):
         
-        proxy = choose_proxy_from_proxyrotation() 
+        proxy = choose_proxy_from_proxyrotation(proxy_probabiltys) 
         logger.info("proxy with {s} url".format(s=proxy[1]))
     
         
@@ -170,6 +171,7 @@ def crawl_dw():
         else:
             logger.info("url in db found")
         
+    db.savedb()
     logger.info("End of Crawl")
     
 
@@ -183,12 +185,14 @@ if __name__ == "__main__":
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-
+    START_ON_STARTUP = True
     GLOBAL_RUN = True
 
     while GLOBAL_RUN:
         
-        crawl_dw()
+        if START_ON_STARTUP == True:
+            crawl_dw()
+            START_ON_STARTUP = False
 
         TIME = get_actual_datetime()    
         
@@ -203,4 +207,5 @@ if __name__ == "__main__":
             STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
         
         NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
+        time.sleep(60*15)
 

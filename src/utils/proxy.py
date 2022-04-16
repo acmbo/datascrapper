@@ -3,6 +3,7 @@ import time
 import random
 import logging
 from utils.settings import API_KEY, API_KEY_SCRAPPERYPI
+#from settings import API_KEY, API_KEY_SCRAPPERYPI
 from torpy import TorClient
 from torpy.utils import recv_all
 from torpy.http import requests as tor_request
@@ -77,10 +78,16 @@ def choose_proxy_from_proxyrotation(**kwargs):
     return choosen_proxy, amount_of_urls
 
 
+def local_url(url:str):
+    """Function for local request.
+    Seperated for testing"""
+    return urlopen(url)
+
+
 def local_request(url:str):
     
     try:
-        page = urlopen(url)
+        page = local_url(url)
 
         html_bytes = page.read()
         html = html_bytes.decode("utf_8")
@@ -89,6 +96,25 @@ def local_request(url:str):
     except:
         return None
 
+
+def tor_get_request(url: str):
+    """Reqeust via Tor to get html from url website
+
+    Args:
+        url (str): target url as string
+    """
+    with TorClient() as tor:
+        with tor.get_guard() as guard:
+            adapter = TorHttpAdapter(guard,3)
+            with requests.Session() as sess:
+                #sess.headers.update({'User-Agent':'Mozilla/5.0'})            
+                sess.mount('http://', adapter)
+                sess.mount('https://', adapter)
+                
+                resp = sess.get(url,timeout=15)
+                
+    return resp
+    
 
 def get_html_via_tor(url: str):
     """Reqeust via Tor to get html from url website
@@ -101,25 +127,17 @@ def get_html_via_tor(url: str):
     """
     
     try:
-        with TorClient() as tor:
-            with tor.get_guard() as guard:
-                adapter = TorHttpAdapter(guard,3)
-                with requests.Session() as sess:
-                    #sess.headers.update({'User-Agent':'Mozilla/5.0'})            
-                    sess.mount('http://', adapter)
-                    sess.mount('https://', adapter)
-                    
-                    
-                    resp = sess.get(url,timeout=15)
-                    
-                    if resp.status_code == 200:
-                        return resp.text
-                    
-                    else:
-                        logger.warning("GET Response: {s}".format(s=resp.status_code))
-                        return None
+        resp = tor_get_request(url)
+        
+        if resp.status_code == 200:
+            return resp.text
+        
+        else:
+            logger.warning("GET Response Tor: {s}".format(s=resp.status_code))
+            return None
+        
     except Exception as e:
-        logger.warning("GET Response: None - {e}".format(e=e))
+        logger.warning("GET Response Tor: None - {e}".format(e=e))
         return None
                 
 
@@ -190,9 +208,17 @@ def get_proxy_data_from_pubproxy():
         return None
 
 
-def get_html_via_webscrapingapi(url: str, **kwargs):
-    
+def webscrapingapi_get_request(url: str, **kwargs):
+    """Request throuth webscrapingApi, using an APIKEY from a registered Account
 
+    Args:
+        url (str): url of target website
+        API_KEY (str): API_key by the website. Get it through registration
+
+    Returns:
+        response (request)
+    """
+    
     url = requests.utils.quote(url)
     url = url.replace("/","%2F")
     url = "https://api.webscrapingapi.com/v1?api_key={_apikey}&url={_url}&method=GET&device=desktop&proxy_type=datacenter".format(_apikey=API_KEY, _url=url)
@@ -201,24 +227,35 @@ def get_html_via_webscrapingapi(url: str, **kwargs):
     #print(url)
     try:
         response = requests.get(url.encode())
+        
     except Exception as e:
-        logger.warning("GET Response: None - {e}".format(e=e))
+        logger.warning("GET Response Webscrap: None - {e}".format(e=e))
         return None
-    
-        
-    
-    try:
-        if response.status_code == 200:
-            return response.text
-        
-    except:
-        logger.warning("GET Response: {s}".format(s=response.status_code))
-        return None
-    
     
 
+def get_html_via_webscrapingapi(url: str, **kwargs):
+    """Exectuion of reqeust for slug
+
+    Args:
+        url (str): urlink
+        
+    Returns:
+        response(str) = html of website
+    """
+    response=webscrapingapi_get_request(url)
+    
+    if response:
+        if response.status_code == 200:
+            return response.text
+        else:
+            logger.warning("GET Response Webscrap: {s}".format(s=response.status_code))
+    return None
+ 
+
 def get_html_via_webscrapingapi_depricated(url: str, **kwargs):
-    """get html text as str from an website via webscraping api
+    """
+    DEPRICATED!!
+    get html text as str from an website via webscraping api
     from https://api.webscrapingapi.com
 
     Args:
@@ -245,7 +282,7 @@ def get_html_via_webscrapingapi_depricated(url: str, **kwargs):
             return response.text
             
         else:
-            logger.warning("GET Response: {s}".format(s=response.status_code))
+            logger.warning("GET Response : {s}".format(s=response.status_code))
             return None
         
     except Exception as e:
@@ -253,8 +290,29 @@ def get_html_via_webscrapingapi_depricated(url: str, **kwargs):
         return None
 
 
+def scrapingapi_get_request(url: str, **kwargs):
+    """Exectuion of request for slug
 
+    Args:
+        url (str): urlink
+        
+    Returns:
+        response(str) = html of website
+    """
+    
+    url_websracpe_api = 'http://api.scraperapi.com/'
 
+    params = {
+    "api_key":API_KEY_SCRAPPERYPI,
+    "url":url,
+    #"country":"de"
+    }
+
+    response = requests.get(url_websracpe_api, 
+                        params=urlencode(params))
+
+    
+    
 def get_html_via_scrapingapi(url: str, **kwargs):
     """get html text as str from an website via scraping api
     from https://scrapingapi.com
@@ -268,27 +326,18 @@ def get_html_via_scrapingapi(url: str, **kwargs):
     """
     
     
-    url_websracpe_api = 'http://api.scraperapi.com/'
-
-    params = {
-    "api_key":API_KEY_SCRAPPERYPI,
-    "url":url,
-    #"country":"de"
-    }
-
     try:
-        response = requests.get(url_websracpe_api, 
-                        params=urlencode(params))
+        response = scrapingapi_get_request(url)
 
         if response.status_code == 200:
             return response.text
             
         else:
-            logger.warning("GET Response: {s}".format(s=response.status_code))
+            logger.warning("GET Response Scrap: {s}".format(s=response.status_code))
             return None
         
     except Exception as e:
-        logger.warning("GET Response: None - {e}".format(e=e))
+        logger.warning("GET Response Scarp: None - {e}".format(e=e))
         return None
 
 
