@@ -1,6 +1,7 @@
 import redis
 import pickle
 import logging
+import os
 
 _filepath = "slug.log"
 logger = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ def preprocess_for_redis(article_dict, pickle_all=False):
 def preprocess_from_redis(db_value):
     return pickle.loads(db_value)
 
+
 def preprocess_from_redis_hget(db_dict):
     preprocessed_dict = {}
     for key, val in db_dict.items():
@@ -69,11 +71,27 @@ def preprocess_from_redis_hget(db_dict):
             
     return preprocessed_dict
 
+
 def get_db(db_number=REDISDB):
+    
     db = redis.Redis(host='localhost', port=6379, db=db_number)
+    #ERROR: Cant change logfile and dir while client starts up. Cant pass premade config into py-redis
+    #db.config_set("dir", str(os.getcwd()))
+    
+    db.config_set("dbfilename", "redis_dw_dumb.db")
+    
+    #db.config_set("logfile", os.path.join(os.getcwd(), "src","db","redis_db_server.log"))
     return db
 
 
+def get_dump_location(db):
+    return db.config_get()["dir"]
+
+
+def get_log_filename(db):
+    return db.config_get()["logfile"]
+    
+    
 def add_article(db, article):
     db.set(article["url"], preprocess_for_redis(article, pickle_all=True))
     
@@ -95,6 +113,7 @@ def add_article_hashset(db, article):
         except Exception as dberror:
             logger.error("Error Redis add article with hashset: \n {e} \n -----------------------------".format(e=dberror))
             #print((key,item))
+    
     
 def get_first_dw_articles(db):
     pass
@@ -125,6 +144,7 @@ def update_article(db,url,article):
     db.dw.update_one({'url': url}, 
                      {"$set": {"newfield": "abc"}}, 
                      upsert=False)
+
 
 def savedb(db):
     """Creates hardsiks backup"""

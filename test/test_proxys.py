@@ -8,7 +8,6 @@ sys.path.append(os.path.abspath(os.path.join('.', 'src')))
 
 from utils.proxy import get_html_via_scrapingapi, get_html_via_tor, get_html_via_webscrapingapi, get_html_via_scrapingapi,local_url
 from utils.proxy import scrapingapi_get_request, tor_get_request, webscrapingapi_get_request, local_request
-from urllib.request import Request
 
 
 testapi='https://api.ipify.org' #Returns current api adress

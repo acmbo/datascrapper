@@ -12,6 +12,7 @@ from dw.article import extract_article_data
 from db.redis_dw import get_db, add_article_hashset, check_url_exist
 
 
+
 logger = createStandardLogger(__name__)
 
 
@@ -239,7 +240,7 @@ def crawl_dw():
         else:
             logger.info("url in db found")
         
-    db.savedb()
+    db.bgsave()
     logger.info("End of Crawl")
     
 
