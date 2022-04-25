@@ -25,7 +25,7 @@ def float_to_timeformat_of_day(random_time_of_day: float):
         if minutes >0:
             seconds = int(random_time_of_day % hour * 60  % minutes * 60)
         else:
-            seconds = int(random_time_of_day % hour * 60  % minutes * 60)
+            seconds = 0
         
         return hour, minutes,seconds 
     

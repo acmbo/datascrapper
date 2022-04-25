@@ -227,6 +227,7 @@ def webscrapingapi_get_request(url: str, **kwargs):
     #print(url)
     try:
         response = requests.get(url.encode())
+        return response
         
     except Exception as e:
         logger.warning("GET Response Webscrap: None - {e}".format(e=e))
@@ -310,6 +311,8 @@ def scrapingapi_get_request(url: str, **kwargs):
 
     response = requests.get(url_websracpe_api, 
                         params=urlencode(params))
+    
+    return response
 
     
     

@@ -22,11 +22,11 @@ def test_local():
 
 def test_websc():
     test=webscrapingapi_get_request(testapi)
-    assert test.status == 200 
+    assert test.status_code == 200 
 
 def test_scrap():
     test=scrapingapi_get_request(testapi)
-    assert test.status == 200 
+    assert test.status_code == 200 
 
 
 def test_proxys_output():
