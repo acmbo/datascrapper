@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
     TIME = get_actual_datetime()
     LASTACTIVETIME = get_actual_datetime()
-    NEWDAY = True
+    NEWDAY = False
     STARTHOUR = int(20+random.random()*4)
     #STARTHOUR = 13
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
@@ -256,11 +256,14 @@ if __name__ == "__main__":
                             
     START_ON_STARTUP = True
     GLOBAL_RUN = True
+    
+    logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
 
     while GLOBAL_RUN:
         
         if START_ON_STARTUP == True:
             crawl_dw()
+            logger.info("Slug start time: {n}".format(n=str(TIME)))
             START_ON_STARTUP = False
 
         TIME = get_actual_datetime()    
@@ -268,12 +271,14 @@ if __name__ == "__main__":
         if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
             
             crawl_dw()
+            logger.info("Slug start time: {n}".format(n=str(TIME)))
             
             LASTACTIVETIME = get_actual_datetime()
             
             # Data for next run
             STARTHOUR = int(20+random.random()*4)
             STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
+            logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
         
         NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
         time.sleep(60*15)

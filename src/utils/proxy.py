@@ -93,7 +93,8 @@ def local_request(url:str):
         html = html_bytes.decode("utf_8")
         return html
     
-    except:
+    except Exception as e:
+        logger.warning("GET Response Local: None - {e}".format(e=e))
         return None
 
 
