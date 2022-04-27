@@ -262,16 +262,16 @@ if __name__ == "__main__":
     while GLOBAL_RUN:
         
         if START_ON_STARTUP == True:
-            crawl_dw()
             logger.info("Slug start time: {n}".format(n=str(TIME)))
+            crawl_dw()
             START_ON_STARTUP = False
 
         TIME = get_actual_datetime()    
         
         if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
             
-            crawl_dw()
             logger.info("Slug start time: {n}".format(n=str(TIME)))
+            crawl_dw()
             
             LASTACTIVETIME = get_actual_datetime()
             
