@@ -13,7 +13,7 @@
 
 start:
 	$(info Initialize Redis Server)
-	cd src/db && redis-server --dbfilename "redis_dw_db.rdb" --daemonize yes --logfile dw_db.log
+	cd src/db && sudo redis-server redis.conf --dbfilename "redis_dw_db.rdb" --daemonize yes --logfile dw_db.log
 	#python src/db/redis_db_back.py #Placeholder for backup creation
 	
 

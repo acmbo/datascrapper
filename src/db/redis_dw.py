@@ -74,11 +74,11 @@ def preprocess_from_redis_hget(db_dict):
 
 def get_db(db_number=REDISDB):
     
-    db = redis.Redis(host='localhost', port=6379, db=db_number)
+    db = redis.Redis(host='localhost', port=6378, db=db_number)
     #ERROR: Cant change logfile and dir while client starts up. Cant pass premade config into py-redis
     #db.config_set("dir", str(os.getcwd()))
     
-    db.config_set("dbfilename", "redis_dw_dumb.db")
+    #db.config_set("dbfilename", "redis_dw_dumb.db")
     
     #db.config_set("logfile", os.path.join(os.getcwd(), "src","db","redis_db_server.log"))
     return db
@@ -154,7 +154,42 @@ def savedb(db):
     db.bgsave()
     return 0
 
+def delete_single_key(db, url):
+    db.delete(url)
+    return 0
 
+
+def create_json(db):
+    import json
+    db_keys = get_all_dw_article(db)
+    db_data = {}
+    
+    for key in db_keys:
+        try:
+            if type(key) ==bytes:
+                key=key.decode()
+                
+            db_data[key] = get_dw_article_by_url(db, key)
+        except:
+            print("invalid Key: ", str(key))
+    return db_data 
+    with open("redis_db_BU.json", "w") as outfile:
+        json.dump(db_data, outfile)    
+        
+        
+def json_to_dict(json_file):
+    import json
+
+    with open('data.json') as d:
+        dictData = json.load(json_file)
+    return dictData
+    
+def dict_to_redis(dictionary,db):
+    
+    for key in dictionary.keys():
+        add_article_hashset(db, dictionary[key])
+        
+    return 0
 
 
 if __name__ == "__main__":
