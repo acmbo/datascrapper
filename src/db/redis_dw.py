@@ -172,7 +172,7 @@ def create_json(db):
             db_data[key] = get_dw_article_by_url(db, key)
         except:
             print("invalid Key: ", str(key))
-    return db_data 
+    #return db_data 
     with open("redis_db_BU.json", "w") as outfile:
         json.dump(db_data, outfile)    
         
@@ -180,8 +180,8 @@ def create_json(db):
 def json_to_dict(json_file):
     import json
 
-    with open('data.json') as d:
-        dictData = json.load(json_file)
+    with open(json_file) as d:
+        dictData = json.load(d)
     return dictData
     
 def dict_to_redis(dictionary,db):
