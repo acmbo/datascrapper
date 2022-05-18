@@ -1,9 +1,9 @@
 """utility class and functions for data analysis"""
 import sys
 from pathlib import Path
-from datetime import date, datetime
+from datetime import datetime
 
-from sympy import timed
+import networkx as nx
 
 # For dev purposes, so you can find db.redis
 path = Path(__file__)
@@ -81,14 +81,45 @@ class Analyzer:
                 elif daydelta == None:
                     valid_keys.append((d[0], datetime_object))
                     
-        return np.array(valid_keys)
+        return np.array(valid_keys)    
+    
+    
+    def get_graph_Data_by_time(self, daydelta: int = None):
+        """Get Graph of Keywords used in articles from Redis DB filtered by a time delta. None as daydelta is possible, so you get all keys from db
+
+        Args:
+            daydelta (int, optional): Timedelta in days. Defaults to None.
+
+        Returns:
+            networkx.graph: Graph of Keywords, connected by mentionings in articles
+        """
+        data = self.get_data_filtered_by_time()
+    
+        G = nx.Graph()
         
+        with self.connect_to_db() as db:
+            
+            for entry in data:
+                keywords = get_dw_article_by_url(db, entry[0], hset=True)["Schlagwörter"]
+
+                for keyword_a in keywords:
+                    
+                    for keyword_b in keywords:
+                        
+                        if keyword_a != keyword_b:
+                            G.add_edge(keyword_a, keyword_b)
+        return G    
     
     
 if __name__ =="__main__":
     
     an = Analyzer(1)
-    data = an.get_data_filtered_by_time()
+    g = an.get_graph_Data_by_time()
+
+    import plotly.graph_objects as go
+    
+
+
     
     import spacy
     sp_sm = spacy.load('de_core_news_sm')
@@ -139,4 +170,24 @@ if __name__ =="__main__":
     for i in range(1000):
         x=np.append(x, str(i))
     """
+    
+    # array for range test
+    
+    s="""\
+    x = [1 for a in range(100)]
+    sum=0
+    for i in x:
+        sum += i
+    """
+    
+    timeit.timeit(stmt=s, number=10000, setup ="import numpy as np")
+
         
+    s="""\
+    x = np.ones(100)
+    sum=0
+    for i in x:
+        sum += i
+    """
+    
+    timeit.timeit(stmt=s, number=1000, setup ="import numpy as np")
