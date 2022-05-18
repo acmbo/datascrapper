@@ -126,7 +126,7 @@ def get_dw_article_by_url(db, url, hset=True):
         else:
             return [preprocess_from_redis(db.get(url))]
     except Exception as e:
-        print(Exception)
+        print(e)
         return None
     
 
@@ -183,6 +183,7 @@ def json_to_dict(json_file):
     with open(json_file) as d:
         dictData = json.load(d)
     return dictData
+    
     
 def dict_to_redis(dictionary,db):
     

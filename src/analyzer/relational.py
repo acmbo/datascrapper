@@ -1,10 +1,15 @@
 """Analyzer for relationship inside data"""
 
+import sys
+
+
+
 from arc import Analyzer
+
 
 
 class Relation_Analyzer(Analyzer):
     
     def __init__(self):
-        pass
+        self.db = get_db()
         
