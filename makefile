@@ -30,3 +30,10 @@ save:
 
 init:
 	/etc/init.d/redis-server start
+
+connect:
+	$(info Initialize Redis Server)
+	cd src/db && sudo redis-server redis.conf --dbfilename "redis_dw_db.rdb" --daemonize yes --logfile dw_db.log
+
+	
+	

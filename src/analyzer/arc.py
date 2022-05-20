@@ -84,7 +84,7 @@ class Analyzer:
         return np.array(valid_keys)    
     
     
-    def get_graph_Data_by_time(self, daydelta: int = None):
+    def get_graph_Data_by_time(self, daydelta: int = None, get_themes: bool =False):
         """Get Graph of Keywords used in articles from Redis DB filtered by a time delta. None as daydelta is possible, so you get all keys from db
 
         Args:
@@ -100,25 +100,113 @@ class Analyzer:
         with self.connect_to_db() as db:
             
             for entry in data:
-                keywords = get_dw_article_by_url(db, entry[0], hset=True)["Schlagwörter"]
+                d = get_dw_article_by_url(db, entry[0], hset=True)
+                keywords = d["Schlagwörter"]
+                
+                if get_themes:
+                    themes = d["Themenseiten"]
+                    themes = [th.split(",")[0].replace("'","").replace("(","") for th in themes]
 
                 for keyword_a in keywords:
-                    
                     for keyword_b in keywords:
-                        
-                        if keyword_a != keyword_b:
-                            G.add_edge(keyword_a, keyword_b)
+                        if keyword_a != keyword_b:                            
+                            if (keyword_a, keyword_b) in G.edges:
+                                G.edges[keyword_a, keyword_b]["weight"] += 1
+                            else:
+                                if get_themes:
+                                    G.add_edge(keyword_a, keyword_b, weight=1, themes=themes)
+                                else:
+                                    G.add_edge(keyword_a, keyword_b, weight=1)
         return G    
     
     
 if __name__ =="__main__":
     
     an = Analyzer(1)
-    g = an.get_graph_Data_by_time()
+    G = an.get_graph_Data_by_time()
+    data = an.get_data_filtered_by_time()
 
-    import plotly.graph_objects as go
+
+
+    """
+    import plotly.graph_objs as go
+    from plotly.offline import download_plotlyjs, init_notebook_mode, iplot
+    import plotly
+    import plotly.io as pio
+    pio.renderers.default = "vscode"
+
+    pos = nx.spring_layout(G, seed=1969, weight='weight')
+
+    for n, p in pos.items():
+        G.nodes[n]['pos'] = p
+
+    edge_trace = go.Scatter(
+        x=[],
+        y=[],
+        line=dict(width=0.5,color='#888'),
+        hoverinfo='none',
+        mode='lines')
+
+    for edge in G.edges():
+        x0, y0 = G.nodes[edge[0]]['pos']
+        x1, y1 = G.nodes[edge[1]]['pos']
+        edge_trace['x'] += tuple([x0, x1, None])
+        edge_trace['y'] += tuple([y0, y1, None])
+
+    node_trace = go.Scatter(
+    x=[],
+    y=[],
+    text=[],
+    mode='markers',
+    hoverinfo='text',
+    marker=dict(
+        showscale=True,
+        colorscale='RdBu',
+        reversescale=True,
+        color=[],
+        size=15,
+        colorbar=dict(
+            thickness=10,
+            title='Node Connections',
+            xanchor='left',
+            titleside='right'
+        ),
+        line=dict(width=0)))
+
+    for node in G.nodes():
+        x, y = G.nodes[node]['pos']
+        node_trace['x'] += tuple([x])
+        node_trace['y'] += tuple([y])
+    print("here")
+    for node, adjacencies in enumerate(G.adjacency()):
+        node_trace['marker']['color']+=tuple([len(adjacencies[1])])
+        node_info = adjacencies[0] +' # of connections: '+str(len(adjacencies[1]))
+        node_trace['text']+=tuple([node_info])
+    print("here")
+    fig = go.Figure(data=[edge_trace, node_trace],
+                layout=go.Layout(
+                    title='<br>AT&T network connections',
+                    titlefont=dict(size=16),
+                    showlegend=False,
+                    hovermode='closest',
+                    margin=dict(b=20,l=5,r=5,t=40),
+                    annotations=[ dict(
+                        text="No. of connections",
+                        showarrow=False,
+                        xref="paper", yref="paper") ],
+                    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False)))
+    print("here")
+    iplot(fig)
+    plotly.plot(fig)
+    """
+
+
+
+
+
+    #import plotly.graph_objects as go
     
-
 
     
     import spacy
