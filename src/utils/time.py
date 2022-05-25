@@ -79,7 +79,7 @@ def time_is_passed_by_actualTime(timepoint: tuple):
         (bool): if houre and minutes of timepoint are bigger then current Time
     """
     actual_time = get_actual_datetime()
-    return actual_time.hour >= timepoint.hour and actual_time.minute >= timepoint.minute           
+    return actual_time.hour >= timepoint.hour or (actual_time.hour == timepoint.hour and actual_time.minute >= timepoint.minute)           
     
 
 def check_change_of_day_in_datetimevalues(newer_datetimevalue, old_datetimevalue):

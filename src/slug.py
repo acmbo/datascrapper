@@ -155,6 +155,8 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
     except Exception as e:
         logger.error("Error in Slug: {url} = \n {e} ".format(e=e,
                                                             url=str(_url_source + article['url'])))
+        artlen=len(extracted_articles)
+        logger.error(f"Error in Slug: used idx = {idx}; articles len = {artlen}")
         return 1, extracted_articles
         
 
@@ -204,7 +206,9 @@ def crawl_dw():
             
             time.sleep(sleeptime)
             
-            logger.info("Article extracted, used function " + str(proxy[0]))
+            exartlen = len(extracted_articles)
+            
+            logger.info(f"Article {idx} of {exartlen} extracted, used function " + str(proxy[0]))
             
             print(extracted_articles[idx]['url'])
             
@@ -260,26 +264,29 @@ if __name__ == "__main__":
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
 
     while GLOBAL_RUN:
-        
-        if START_ON_STARTUP == True:
-            logger.info("Slug start time: {n}".format(n=str(TIME)))
-            crawl_dw()
-            START_ON_STARTUP = False
+        try:
+            if START_ON_STARTUP == True:
+                logger.info("Slug start time: {n}".format(n=str(TIME)))
+                crawl_dw()
+                START_ON_STARTUP = False
 
-        TIME = get_actual_datetime()    
-        
-        if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
+            TIME = get_actual_datetime()    
             
-            logger.info("Slug start time: {n}".format(n=str(TIME)))
-            crawl_dw()
+            if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
+                
+                logger.info("Slug start time: {n}".format(n=str(TIME)))
+                crawl_dw()
+                
+                LASTACTIVETIME = get_actual_datetime()
+                
+                # Data for next run
+                STARTHOUR = int(20+random.random()*4)
+                STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
+                logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
             
-            LASTACTIVETIME = get_actual_datetime()
-            
-            # Data for next run
-            STARTHOUR = int(20+random.random()*4)
-            STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
-            logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
-        
-        NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
-        time.sleep(60*15)
+            NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
+            logger.info(f"New day?: {NEWDAY}, Current Time: {TIME}")
+            time.sleep(300)
+        except Exception as e:
+            logger.error(f"Slug error {e}")
 
