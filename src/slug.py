@@ -148,6 +148,7 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
             
         else: 
             extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
+            logger.info("Checkpoint")
             add_article_hashset(_db, extracted_articles[idx])
             logger.info(" -- Sucessfull scraped {url} -- ".format(url=_url_source + article['url']))
             return 0, extracted_articles
@@ -285,7 +286,7 @@ if __name__ == "__main__":
                 logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
             
             NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
-            logger.info(f"New day?: {NEWDAY}, Current Time: {TIME}")
+
             time.sleep(300)
         except Exception as e:
             logger.error(f"Slug error {e}")
