@@ -34,19 +34,22 @@ def preprocess_meta_data(article: dict):
         article (dict): preprocessed dictionary
         
     """
-    
+    logger.info("Checkpoint - prepros1") 
     for key, val in article.items():
         if type(val) == bool:
             continue
         elif type(val) == str:
             continue
         elif type(val) == list:
-            article[key] = [str(entry) for entry in val]
+            try:
+                article[key] = [str(entry) for entry in val]
+            except Exception as e:
+                print(f"{e} for key {key}")
         elif type(val) == dict:
             continue
         else:
             article[key] = str(val)
-            
+    logger.info("Checkpoint - prepros2")   
     return article
 
 
@@ -146,9 +149,10 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
                                                             url=str(_url_source + article['url'])))
             return 1, extracted_articles
             
-        else: 
+        else:
+            
             extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
-            logger.info("Checkpoint")
+            
             add_article_hashset(_db, extracted_articles[idx])
             logger.info(" -- Sucessfull scraped {url} -- ".format(url=_url_source + article['url']))
             return 0, extracted_articles
