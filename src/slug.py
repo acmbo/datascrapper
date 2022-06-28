@@ -1,5 +1,7 @@
 import time
 import random
+import json
+
 from utils.proxy import choose_proxy_from_proxyrotation
 from utils.time import time_is_passed_by_actualTime, \
     select_random_time_of_a_day, get_actual_datetime, check_change_of_day_in_datetimevalues
@@ -34,7 +36,7 @@ def preprocess_meta_data(article: dict):
         article (dict): preprocessed dictionary
         
     """
-    logger.info("Checkpoint - prepros1") 
+    logger.info("Checkpoint - lowerfunc")
     for key, val in article.items():
         if type(val) == bool:
             continue
@@ -44,12 +46,12 @@ def preprocess_meta_data(article: dict):
             try:
                 article[key] = [str(entry) for entry in val]
             except Exception as e:
-                print(f"{e} for key {key}")
+                logger.error(f"{e} for key {key}")
         elif type(val) == dict:
             continue
         else:
             article[key] = str(val)
-    logger.info("Checkpoint - prepros2")   
+     
     return article
 
 
@@ -150,6 +152,9 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
             return 1, extracted_articles
             
         else:
+            logger.info("Checkpoint - upperfunc")
+            artlen=len(extracted_articles)
+            logger.info(f"used idx = {idx}; articles len = {artlen}")
             
             extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
             
@@ -171,6 +176,13 @@ def crawl_dw():
     """
     
     logger.info("Start new Crawl")
+    
+    meta = {}
+    
+    meta["StartTime"] = get_actual_datetime()
+    meta["Articles"] = 0
+    meta["Scrapper"] = "Raspberry Pi 2+"
+    meta["Errors"] = 0
     
     url_source = "https://www.dw.com/"     # Needed fpr building hrefs-urls
 
@@ -215,7 +227,6 @@ def crawl_dw():
             
             logger.info(f"Article {idx} of {exartlen} extracted, used function " + str(proxy[0]))
             
-            print(extracted_articles[idx]['url'])
             
             status , extracted_articles = execute_get_request_article(proxy_func = proxy[0],
                                         _url_source=url_source,
@@ -244,6 +255,12 @@ def crawl_dw():
                 if status==1:
                     
                     logger.error("Still empty html.")
+                    meta["Errors"] +=1
+            
+            if status ==0:
+                
+                meta["Articles"] +=1
+                
                     
                 
         else:
@@ -251,6 +268,10 @@ def crawl_dw():
         
     db.bgsave()
     logger.info("End of Crawl")
+    json_string = json.dumps(meta)
+    
+    with open("scrapper_meta.json", "w") as i :
+        json.dump(json_string, i)
     
 
 if __name__ == "__main__":
