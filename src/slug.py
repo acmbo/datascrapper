@@ -179,7 +179,7 @@ def crawl_dw():
     
     meta = {}
     
-    meta["StartTime"] = get_actual_datetime()
+    meta["StartTime"] = get_actual_datetime().isoformat()
     meta["Articles"] = 0
     meta["Scrapper"] = "Raspberry Pi 2+"
     meta["Errors"] = 0
@@ -269,9 +269,9 @@ def crawl_dw():
     db.bgsave()
     logger.info("End of Crawl")
     json_string = json.dumps(meta)
-    
     with open("scrapper_meta.json", "w") as i :
-        json.dump(json_string, i)
+        json.dump(json_string, i, default=str)
+    logger.info("Write to json")
     
 
 if __name__ == "__main__":
@@ -284,7 +284,7 @@ if __name__ == "__main__":
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-    START_ON_STARTUP = True
+    START_ON_STARTUP = False
     GLOBAL_RUN = True
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     while GLOBAL_RUN:
         try:
             if START_ON_STARTUP == True:
-                logger.info("Slug start time: {n}".format(n=str(TIME)))
+                logger.info("Slug start time on start up: {n}".format(n=str(TIME)))
                 crawl_dw()
                 START_ON_STARTUP = False
 
@@ -313,6 +313,7 @@ if __name__ == "__main__":
             NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
 
             time.sleep(300)
+            
         except Exception as e:
             logger.error(f"Slug error {e}")
 
