@@ -275,7 +275,7 @@ def crawl_dw():
     logger.info("Write to json")
     
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
-    meta_analyzer.post_to_api()
+    meta_analyzer.post_to_api(internal=False)
     
 
 if __name__ == "__main__":
