@@ -1,7 +1,7 @@
 """Analyzer for meta of data"""
 import json
 import requests
-from arc import Analyzer
+from .arc import Analyzer
 
 
 class Meta_Analyzer(Analyzer):
