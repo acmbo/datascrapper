@@ -11,8 +11,8 @@ from scrape_dw import scrape_dw_theme_page
 from dw.utils_article import remove_double_entrys_in_article
 from dw.article import extract_article_data
 #from db.mongo import get_db, add_article, check_url_exist
-from db.redis_dw import get_db, add_article_hashset, check_url_exist
-
+from db.redis_dw import get_db, add_article_hashset, check_url_exist, REDISDB
+from analyzer.meta import Meta_Analyzer
 
 
 logger = createStandardLogger(__name__)
@@ -178,6 +178,7 @@ def crawl_dw():
     logger.info("Start new Crawl")
     
     meta = {}
+
     
     meta["StartTime"] = get_actual_datetime().isoformat()
     meta["Articles"] = 0
@@ -272,6 +273,9 @@ def crawl_dw():
     with open("scrapper_meta.json", "w") as i :
         json.dump(json_string, i, default=str)
     logger.info("Write to json")
+    
+    meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
+    meta_analyzer.post_to_api()
     
 
 if __name__ == "__main__":
