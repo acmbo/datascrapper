@@ -14,8 +14,8 @@ class Meta_Analyzer(Analyzer):
     def __init__(self, dbnumber, data=None):
         super().__init__(dbnumber)
         self.data = {}
-        self.url_internal = "http://127.0.0.1:5000/meta/scrapper/"
-        self.url = "http://stephanscorner.de/meta/scrapper/"
+        self.url_internal = "http://127.0.0.1:5000/meta/scrapper"
+        self.url = "http://stephanscorner.de/meta/scrapper"
         self.meta_filepath = "scrapper_meta.json"
         if data:
             self.data = data
