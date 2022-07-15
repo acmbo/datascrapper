@@ -276,6 +276,7 @@ def crawl_dw():
     
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
     meta_analyzer.post_to_api(internal=False)
+    logger.info("Send Meta to Server")
     
 
 if __name__ == "__main__":
@@ -288,7 +289,7 @@ if __name__ == "__main__":
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-    START_ON_STARTUP = False
+    START_ON_STARTUP = True
     GLOBAL_RUN = True
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
