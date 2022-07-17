@@ -12,6 +12,8 @@ if path.parent.name == 'analyzer':
     
     
 import numpy as np
+import pandas as pd
+import requests
 from db.redis_dw import get_db, get_all_dw_article, get_dw_article_by_url
 from db.redis_dw import *
 
@@ -93,7 +95,7 @@ class Analyzer:
         Returns:
             networkx.graph: Graph of Keywords, connected by mentionings in articles
         """
-        data = self.get_data_filtered_by_time()
+        data = self.get_data_filtered_by_time(daydelta=daydelta)
     
         G = nx.Graph()
         
@@ -120,14 +122,126 @@ class Analyzer:
         return G    
     
     
+    def get_keywords_by_time(self, daydelta: int = None):
+        """Get Graph of Keywords used in articles from Redis DB filtered by a time delta. None as daydelta is possible, so you get all keys from db
+
+        Args:
+            daydelta (int, optional): Timedelta in days. Defaults to None.
+
+        Returns:
+            networkx.graph: Graph of Keywords, connected by mentionings in articles
+        """
+        data = self.get_data_filtered_by_time(daydelta=daydelta)
+    
+        G = nx.Graph()
+        
+        with self.connect_to_db() as db:
+            
+            all_keywords = []
+            
+            for entry in data:
+                d = get_dw_article_by_url(db, entry[0], hset=True)
+                keywords = d["Schlagwörter"]
+                
+                all_keywords.append(keywords)
+
+
+        return all_keywords
+    
+    
+    def get_keyword_amount(self,top=0, daydelta: int = None):
+        # Get Keywords Table with amount of use
+
+        key = self.get_keywords_by_time(daydelta=daydelta)
+        
+        #Flatten keywordlist
+        flattened_keys = []
+        for sublist in key:
+            flattened_keys.extend(sublist)
+            
+        key_data = {}
+        for word in flattened_keys:
+            if word not in key_data.keys():
+                key_data[word]=1
+            else:
+                key_data[word]+=1
+
+  
+        df = pd.DataFrame(key_data, index=[0]).transpose()
+        
+        df.columns = ["Amount"]
+        df.sort_values("Amount", ascending=False, inplace=True)
+        
+        if top>0:
+            df = df.head(top)
+
+        return_data = {}
+        
+        for ind, val in zip(df.index, df["Amount"].values):
+            return_data[ind]= int(val)    
+
+        return return_data
+    
+    
+    def get_keyword_raw(self, daydelta:int = None):
+            # Get Keywords Table with amount of use
+
+        key = self.get_keywords_by_time(daydelta)
+        
+        #Flatten keywordlist
+        flattened_keys = []
+        for sublist in key:
+            flattened_keys.extend(sublist)
+            
+        return flattened_keys
+    
+    
+    def send_kw_monht_data_to_api(self, data, internal=True):
+        if internal:
+            url="http://127.0.0.1:5000/meta/keywordsmonth/"
+        else:
+            url="https://stephanscorner.de/meta/keywordsmonth/"
+        r = requests.post(url, json=data)
+        return r
+
+
+    def send_kw_week_data_to_api(self, data, internal=True):
+        if internal:
+            url="http://127.0.0.1:5000/meta/keywordsweek/"
+        else:
+            url="https://stephanscorner.de/meta/keywordsweek/"
+        r = requests.post(url, json=data)
+        return r
+    
+    
+    def send_delete_req_month(self, internal=True):
+        if internal:
+            url="http://127.0.0.1:5000/meta/keywordsmonth/"
+        else:
+            url="https://stephanscorner.de/meta/keywordsmonth/"
+        r = requests.delete(url)
+        return r
+
+    def send_delete_req_week(self, internal=True):
+        if internal:
+            url="http://127.0.0.1:5000/meta/keywordsweek/"
+        else:
+            url="https://stephanscorner.de/meta/keywordsweek/"
+        r = requests.delete(url)
+        return r
+    
+    
 if __name__ =="__main__":
     
     an = Analyzer(1)
-    G = an.get_graph_Data_by_time()
-    data = an.get_data_filtered_by_time()
+    G = an.get_graph_Data_by_time(daydelta=120)
+    data = an.get_data_filtered_by_time(daydelta=120)
+    key_data = an.get_keyword_amount(top=20)
+    key_raw = an.get_keyword_raw(daydelta=120)
+    r1 = an.send_delete_req_month()
+    r = an.send_kw_monht_data_to_api(key_data)
 
-
-
+    
     """
     import plotly.graph_objs as go
     from plotly.offline import download_plotlyjs, init_notebook_mode, iplot
@@ -199,16 +313,9 @@ if __name__ =="__main__":
     print("here")
     iplot(fig)
     plotly.plot(fig)
-    """
 
 
 
-
-
-    #import plotly.graph_objects as go
-    
-
-    
     import spacy
     sp_sm = spacy.load('de_core_news_sm')
     sp_em = spacy.load('de_dep_news_trf')
@@ -240,42 +347,5 @@ if __name__ =="__main__":
     
     x = spacy_ner(test_ar, sp_em)
     x = spacy_ner_get_LOC(test_ar, sp_sm)
-    
-    
-    import timeit
-    
-    s="""\
-    x = []
-    for i in range(1000):
-        x.append(str(i))
     """
     
-    timeit.timeit(stmt=s, number=100000, setup ="import numpy as np")
-
-        
-    s="""\
-    x = np.empty((0,2), str)
-    for i in range(1000):
-        x=np.append(x, str(i))
-    """
-    
-    # array for range test
-    
-    s="""\
-    x = [1 for a in range(100)]
-    sum=0
-    for i in x:
-        sum += i
-    """
-    
-    timeit.timeit(stmt=s, number=10000, setup ="import numpy as np")
-
-        
-    s="""\
-    x = np.ones(100)
-    sum=0
-    for i in x:
-        sum += i
-    """
-    
-    timeit.timeit(stmt=s, number=1000, setup ="import numpy as np")

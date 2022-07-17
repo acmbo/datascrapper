@@ -16,6 +16,8 @@ logger.addHandler(file_handler)
 logger.addHandler(logging.StreamHandler())
 
 REDISDB = 1
+PORT=6378
+PORT=6379
 
 
 def preprocess_for_redis(article_dict, pickle_all=False):
@@ -74,7 +76,7 @@ def preprocess_from_redis_hget(db_dict):
 
 def get_db(db_number=REDISDB):
     
-    db = redis.Redis(host='localhost', port=6378, db=db_number)
+    db = redis.Redis(host='localhost', port=PORT, db=db_number)
     #ERROR: Cant change logfile and dir while client starts up. Cant pass premade config into py-redis
     #db.config_set("dir", str(os.getcwd()))
     
