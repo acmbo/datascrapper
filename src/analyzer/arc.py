@@ -231,17 +231,119 @@ class Analyzer:
         return r
     
     
+    def send_raw_to_api_month(self, raw_data, internal=True):
+        """post objects data to server api. Internal argument used for determining if you post to a internalt test server or to productive online server
+
+        Args:
+            internal (bool, optional): Send data to internal test server or online productive system. Defaults to True, which sends data to internal test server.
+        """
+        post_data = {
+            'keywords': (None, " ".join(raw_data)),
+        }
+
+        if internal:
+            url="http://127.0.0.1:5000/themegraph/keywordsrawmonth/"
+        else:
+            url="https://stephanscorner.de/themegraph/keywordsrawmonth/"
+
+        response = requests.post(url, files=post_data)
+        return response
+
+
+    def send_raw_to_api_week(self, raw_data, internal=True):
+        """post objects data to server api. Internal argument used for determining if you post to a internalt test server or to productive online server
+
+        Args:
+            internal (bool, optional): Send data to internal test server or online productive system. Defaults to True, which sends data to internal test server.
+        """
+        post_data = {
+            'keywords': (None, " ".join(raw_data)),
+        }
+
+        if internal:
+            url="http://127.0.0.1:5000/themegraph/keywordsrawweek/"
+        else:
+            url="https://stephanscorner.de/themegraph/keywordsrawweek/"
+
+        response = requests.post(url, files=post_data)
+        return response
+
+
+    def send_delete_req_raw_month(self, internal=True):
+        if internal:
+            url="http://127.0.0.1:5000/themegraph/keywordsrawmonth/"
+        else:
+            url="https://stephanscorner.de/themegraph/keywordsrawmonth/"
+
+        r = requests.delete(url)
+        return r
+    
+
+    def send_delete_req_raw_week(self, internal=True):
+        if internal:
+            url="http://127.0.0.1:5000/themegraph/keywordsrawweek/"
+        else:
+            url="https://stephanscorner.de/themegraph/keywordsrawweek/"
+
+        r = requests.delete(url)
+        return r
+    
+    
+    def main(self):
+        # Create data for website
+        
+        # Graph data
+        #G = self.get_graph_Data_by_time(daydelta=120)
+        #data = self.get_data_filtered_by_time(daydelta=120)
+        
+        # Get Keywords for api
+        keyW_data_week = self.get_keyword_amount(daydelta=7, top=20)  #Weekly
+        keyW_data_month = self.get_keyword_amount(daydelta=30, top=20)  #Monthly
+        
+        # Get raw Keywords for api
+        key_raw_week = self.get_keyword_raw(daydelta=7)
+        key_raw_month = self.get_keyword_raw(daydelta=30)
+        
+        responses = {}
+        
+        # Clean api db
+        ## Raw data
+        responses["Clean Month Raw Data"]= self.send_delete_req_raw_month(internal=False)
+        responses["Clean Weekly Raw Data"] = self.send_delete_req_raw_week(internal=False)
+
+        ## Keywordtables
+        responses["Clean Month tables Data"] = self.send_delete_req_month(internal=False)
+        responses["Clean Weekly tables Data"] = self.send_delete_req_week(internal=False)
+        
+        # Send new data to api
+        ## Raw data
+        responses["Post Raw KW Week"] = self.send_raw_to_api_week(key_raw_week, internal=False)
+        responses["Post Raw KW Month"] = self.send_raw_to_api_month(key_raw_month, internal=False)
+        
+        ## Keywordtables
+        responses["Post KW tables Week"] = self.send_kw_week_data_to_api(keyW_data_week,  internal=False)
+        responses["Post KW tables Month"] = self.send_kw_monht_data_to_api(keyW_data_month, internal=False)
+        
+        return responses
+
 if __name__ =="__main__":
     
     an = Analyzer(1)
+    """
     G = an.get_graph_Data_by_time(daydelta=120)
     data = an.get_data_filtered_by_time(daydelta=120)
     key_data = an.get_keyword_amount(top=20)
     key_raw = an.get_keyword_raw(daydelta=120)
     r1 = an.send_delete_req_month()
     r = an.send_kw_monht_data_to_api(key_data)
-
+    r2 = an.send_raw_to_api_month(key_raw)
+    """
+    rep = an.main()
+    print(rep)
     
+    
+    
+    # Not used:
     """
     import plotly.graph_objs as go
     from plotly.offline import download_plotlyjs, init_notebook_mode, iplot

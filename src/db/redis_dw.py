@@ -16,8 +16,8 @@ logger.addHandler(file_handler)
 logger.addHandler(logging.StreamHandler())
 
 REDISDB = 1
-PORT=6378
-PORT=6379
+PORT=6378   # For Raspberry Pi
+#PORT=6379  # For Dev
 
 
 def preprocess_for_redis(article_dict, pickle_all=False):

@@ -13,6 +13,10 @@ from dw.article import extract_article_data
 #from db.mongo import get_db, add_article, check_url_exist
 from db.redis_dw import get_db, add_article_hashset, check_url_exist, REDISDB
 from analyzer.meta import Meta_Analyzer
+from analyzer.arc import Analyzer
+
+
+GLOBALSLEEPTIME = random.randint(3,10)
 
 
 logger = createStandardLogger(__name__)
@@ -78,7 +82,7 @@ def extract_articles_from_urlist_of_dw_theme_pages(urls: list):
         
         while run:
             
-            sleeptime = random.randint(5,10)
+            sleeptime = GLOBALSLEEPTIME 
             
             logger.info("sleeping {num} secs...".format(num=sleeptime))
             
@@ -218,7 +222,7 @@ def crawl_dw():
         
         if check_url_exist(db,art['url']) == False:
             
-            sleeptime = random.randint(3,10)
+            sleeptime = GLOBALSLEEPTIME
             
             logger.info("sleeping {num} secs...".format(num=sleeptime))
             
@@ -274,9 +278,15 @@ def crawl_dw():
         json.dump(json_string, i, default=str)
     logger.info("Write to json")
     
+    # Analyzer only for meta api
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
     meta_analyzer.post_to_api(internal=False)
     logger.info("Send Meta to Server")
+    
+    # Analyzer sends Data from Redis db to meta and theme graph api
+    redis_analyzer = Analyzer(REDISDB)
+    rep = redis_analyzer.main() #Responses from Api
+    logger.info(f"Send graph data to server: {rep}")    
     
 
 if __name__ == "__main__":

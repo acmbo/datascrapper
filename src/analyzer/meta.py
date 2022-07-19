@@ -63,6 +63,8 @@ class Meta_Analyzer(Analyzer):
         
         with open(self.meta_filepath, "w") as i :
             json.dump(json_string, i)
+        
+        
             
 if __name__ == "__main__":
     
