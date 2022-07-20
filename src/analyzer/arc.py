@@ -291,6 +291,68 @@ class Analyzer:
         return r
     
     
+    
+    
+    def send_postings_to_api(self, data, endpoint: str = "postingsweek/", internal=True):
+        """post objects data to server api. Internal argument used for determining if you post to a internalt test server or to productive online server
+
+        Args:
+            internal (bool, optional): Send data to internal test server or online productive system. Defaults to True, which sends data to internal test server.
+        """
+        posts ={
+            "posts":[],
+            "dates":[]
+        }
+        
+        if endpoint not in ["postingsweek/","postingsmonth/", "postingsyear/"]:
+            return "Wrong Endpoints" 
+        
+        for url, date in data:
+            if date not in posts["dates"]:
+                posts["posts"].append(1)
+                posts["dates"].append(date)
+            else:
+                posts["posts"][posts["dates"].index(date)] +=1
+        
+        responses=[]
+           
+        for i in range(len(posts["dates"])):
+        
+            post_data = {
+                'post': (None, posts["posts"][i]),
+                'date': (None, posts["dates"][i].isoformat()),
+            }
+            
+            if internal:
+                url="http://127.0.0.1:5000/meta/"+ endpoint
+            else:
+                url="https://stephanscorner.de/meta/" + endpoint
+
+            response = requests.post(url, files=post_data)
+            
+            responses.append(response.status_code)
+            
+        return responses
+    
+    
+    
+    def send_delete_to_postings(self, endpoint: str = "postingsweek/", internal=True):
+        
+        if endpoint not in ["postingsweek/","postingsmonth/", "postingsyear/"]:
+            return "Wrong Endpoints" 
+        
+        if internal:
+            url="http://127.0.0.1:5000/meta/"+ endpoint
+        else:
+            url="https://stephanscorner.de/meta/" + endpoint
+        r = requests.delete(url)
+        return r
+    
+    
+    
+    
+    
+    
     def main(self):
         # Create data for website
         
@@ -306,7 +368,25 @@ class Analyzer:
         key_raw_week = self.get_keyword_raw(daydelta=7)
         key_raw_month = self.get_keyword_raw(daydelta=30)
         
-        responses = {}
+        
+        # Get Postings
+        data_7 = self.get_data_filtered_by_time(daydelta=7)
+        data_month = self.get_data_filtered_by_time(daydelta=30)
+        data_complete = self.get_data_filtered_by_time()
+        
+        
+        responses = {}  
+        
+        # Postings Data
+        responses["Clean Postings Week"] = self.send_delete_to_postings(endpoint = "postingsweek/", internal=False)
+        responses["Post Postings Week"] = self.send_postings_to_api(data_7, endpoint="postingsweek/", internal=False) 
+
+        responses["Clean Postings Month"] = self.send_delete_to_postings(endpoint = "postingsmonth/", internal=False)
+        responses["Post Postings Month"] = self.send_postings_to_api(data_month, endpoint="postingsmonth/", internal=False) 
+        
+        responses["Clean Postings Year"] = self.send_delete_to_postings(endpoint = "postingsyear/", internal=False)
+        responses["Post Postings Year"] = self.send_postings_to_api(data_complete, endpoint="postingsyear/", internal=False) 
+
         
         # Clean api db
         ## Raw data
@@ -340,6 +420,25 @@ if __name__ =="__main__":
     r = an.send_kw_monht_data_to_api(key_data)
     r2 = an.send_raw_to_api_month(key_raw)
     """
+    
+    # Get Postings
+    data_7 = an.get_data_filtered_by_time(daydelta=7)
+    data_month = an.get_data_filtered_by_time(daydelta=30)
+    data_complete = an.get_data_filtered_by_time()
+    
+    
+    responses = {}  
+    
+    # Postings Data
+    responses["Clean Postings Week"] = an.send_delete_to_postings(endpoint = "postingsweek/", internal=True)
+    responses["Post Postings Week"] = an.send_postings_to_api(data_7, endpoint="postingsweek/", internal=True) 
+
+    responses["Clean Postings Month"] = an.send_delete_to_postings(endpoint = "postingsmonth/", internal=True)
+    responses["Post Postings Month"] = an.send_postings_to_api(data_month, endpoint="postingsmonth/", internal=True) 
+    
+    responses["Clean Postings Year"] = an.send_delete_to_postings(endpoint = "postingsyear/", internal=True)
+    responses["Post Postings Year"] = an.send_postings_to_api(data_complete, endpoint="postingsyear/", internal=True) 
+    
     rep = an.main()
     print(rep)
     
