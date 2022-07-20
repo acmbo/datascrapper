@@ -192,7 +192,9 @@ class Analyzer:
         flattened_keys = []
         for sublist in key:
             flattened_keys.extend(sublist)
-            
+        
+        flattened_keys = [word.replace(" ", "-") for word in flattened_keys]
+        
         return flattened_keys
     
     
