@@ -365,7 +365,7 @@ class Analyzer:
         
         G = self.get_graph_Data_by_time(daydelta=daydelta)
 
-        data = {"node":[],
+        data = {"nodes":[],
                 "links":[]}
         for entry in list(G.edges):
             source, target = entry
