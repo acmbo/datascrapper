@@ -4,7 +4,6 @@ from pathlib import Path
 from datetime import datetime
 
 import networkx as nx
-from sklearn.metrics import r2_score
 
 # For dev purposes, so you can find db.redis
 path = Path(__file__)
