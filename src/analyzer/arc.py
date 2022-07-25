@@ -4,6 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 import networkx as nx
+from sklearn.metrics import r2_score
 
 # For dev purposes, so you can find db.redis
 path = Path(__file__)
@@ -349,6 +350,46 @@ class Analyzer:
         return r
     
     
+    def send_graph_to_api(self, endpoint: str = "themeGraphDaily/", internal=True, daydelta:int = None):
+                
+    
+        if endpoint not in ["themeGraphWeekly/","themeGraphMonthly/", "themeGraphDaily/"]:
+            return "Wrong Endpoints" 
+
+        if not daydelta:
+            if endpoint == "themeGraphDaily/":
+                daydelta = 1
+            elif endpoint == "themeGraphWeekly/":
+                daydelta = 7
+            elif endpoint == "themeGraphMonthly/":
+                daydelta = 30
+        
+        G = self.get_graph_Data_by_time(daydelta=daydelta)
+
+        data = {"node":[],
+                "links":[]}
+        for entry in list(G.edges):
+            source, target = entry
+            data_entry={
+                "source": source,
+                "target": target,
+                "value": 1,
+                "urls":""
+            }
+            data["links"].append(data_entry)
+        
+        for entry in list(G.nodes):
+            data_entry = {"id": entry, "group": "1"} 
+            data["node"].append(data_entry)
+
+        if internal:
+            url="http://127.0.0.1:5000/themegraph/" + endpoint
+        else:
+            url="https://stephanscorner.de/themegraph/" + endpoint
+            
+        r = requests.post(url, json=data)
+        return r
+    
     
     
     
@@ -406,11 +447,18 @@ class Analyzer:
         responses["Post KW tables Week"] = self.send_kw_week_data_to_api(keyW_data_week,  internal=False)
         responses["Post KW tables Month"] = self.send_kw_monht_data_to_api(keyW_data_month, internal=False)
         
+        responses["Post Graph Daily"]  = self.send_graph_to_api(endpoint="themeGraphDaily/", internal=False)
+        responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False)
+        responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False)
+
+        
+        
         return responses
 
 if __name__ =="__main__":
     
     an = Analyzer(1)
+
     """
     G = an.get_graph_Data_by_time(daydelta=120)
     data = an.get_data_filtered_by_time(daydelta=120)
@@ -419,8 +467,10 @@ if __name__ =="__main__":
     r1 = an.send_delete_req_month()
     r = an.send_kw_monht_data_to_api(key_data)
     r2 = an.send_raw_to_api_month(key_raw)
-    """
-    
+        #"themeGraphWeekly/","themeGraphMonthly/", "themeGraphDaily/"]
+    r1 = an.send_graph_to_api(endpoint="themeGraphDaily/", internal=True, daydelta = 150)
+    r2 = an.send_graph_to_api(endpoint="themeGraphMonthly/", internal=True, daydelta = 150)
+    r3 = an.send_graph_to_api(endpoint="themeGraphWeekly/", internal=True, daydelta = 150)
     # Get Postings
     data_7 = an.get_data_filtered_by_time(daydelta=7)
     data_month = an.get_data_filtered_by_time(daydelta=30)
@@ -441,6 +491,10 @@ if __name__ =="__main__":
     
     rep = an.main()
     print(rep)
+
+    """
+    
+
     
     
     
