@@ -379,7 +379,7 @@ class Analyzer:
         
         for entry in list(G.nodes):
             data_entry = {"id": entry, "group": "1"} 
-            data["node"].append(data_entry)
+            data["nodes"].append(data_entry)
 
         if internal:
             url="http://127.0.0.1:5000/themegraph/" + endpoint

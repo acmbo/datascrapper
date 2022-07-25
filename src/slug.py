@@ -17,6 +17,7 @@ from analyzer.arc import Analyzer
 
 
 GLOBALSLEEPTIME = random.randint(3,10)
+GLOBALSLEEPTIME = 0
 
 
 logger = createStandardLogger(__name__)
@@ -156,9 +157,7 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
             return 1, extracted_articles
             
         else:
-            logger.info("Checkpoint - upperfunc")
             artlen=len(extracted_articles)
-            logger.info(f"used idx = {idx}; articles len = {artlen}")
             
             extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
             
@@ -198,7 +197,7 @@ def crawl_dw():
     db = get_db() 
 
     #random_int = 0  #commented out from former version of the script
-
+    
     proxy = choose_proxy_from_proxyrotation(local_request=local_request,
                                             get_html_via_tor=get_html_via_tor,
                                             get_html_via_webscrapingapi=get_html_via_webscrapingapi,
@@ -217,7 +216,7 @@ def crawl_dw():
                                                 get_html_via_tor=get_html_via_tor,
                                                 get_html_via_webscrapingapi=get_html_via_webscrapingapi,
                                                 get_html_via_scrapingapi=get_html_via_scrapingapi) 
-        logger.info("proxy with {s} url".format(s=proxy[1]))
+        #logger.info("proxy with {s} url".format(s=proxy[1]))
     
         
         if check_url_exist(db,art['url']) == False:
@@ -269,9 +268,10 @@ def crawl_dw():
                     
                 
         else:
-            logger.info("url in db found")
-        
+            #logger.info("url in db found")
+            pass
     db.bgsave()
+    
     logger.info("End of Crawl")
     json_string = json.dumps(meta)
     with open("scrapper_meta.json", "w") as i :
@@ -280,26 +280,31 @@ def crawl_dw():
     
     # Analyzer only for meta api
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
-    meta_analyzer.post_to_api(internal=False)
+    #meta_analyzer.post_to_api(internal=False)
     logger.info("Send Meta to Server")
     
     # Analyzer sends Data from Redis db to meta and theme graph api
-    redis_analyzer = Analyzer(REDISDB)
-    rep = redis_analyzer.main() #Responses from Api
-    logger.info(f"Send graph data to server: {rep}")    
+    try:
+        redis_analyzer = Analyzer(REDISDB)
+        logger.info("Load Analyzer")
+        rep = redis_analyzer.main() #Responses from Api
+        logger.info(f"Send graph data to server: {rep}")
+        
+    except Exception as e:
+        logger.error(f"Error--- : {e}")
     
 
 if __name__ == "__main__":
 
     TIME = get_actual_datetime()
     LASTACTIVETIME = get_actual_datetime()
-    NEWDAY = True
+    NEWDAY = False
     STARTHOUR = int(20+random.random()*4)
     #STARTHOUR = 13
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-    START_ON_STARTUP = True
+    START_ON_STARTUP = False
     GLOBAL_RUN = True
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
