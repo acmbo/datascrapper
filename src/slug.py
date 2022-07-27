@@ -280,18 +280,16 @@ def crawl_dw():
     
     # Analyzer only for meta api
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
-    #meta_analyzer.post_to_api(internal=False)
-    logger.info("Send Meta to Server")
+    r = meta_analyzer.post_to_api(internal=False)
+    logger.info("Send Meta to Server: ", r)
     
     # Analyzer sends Data from Redis db to meta and theme graph api
-    try:
-        redis_analyzer = Analyzer(REDISDB)
-        logger.info("Load Analyzer")
-        rep = redis_analyzer.main() #Responses from Api
-        logger.info(f"Send graph data to server: {rep}")
-        
-    except Exception as e:
-        logger.error(f"Error--- : {e}")
+    
+    redis_analyzer = Analyzer(REDISDB)
+    logger.info("Load Analyzer")
+    rep = redis_analyzer.main() #Responses from Api
+    logger.info(f"Send graph data to server: {rep}")
+
     
 
 if __name__ == "__main__":
@@ -335,5 +333,5 @@ if __name__ == "__main__":
             time.sleep(300)
             
         except Exception as e:
-            logger.error(f"Slug error {e}")
+            logger.error(f"Slug error: {e}")
 
