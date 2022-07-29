@@ -296,7 +296,7 @@ if __name__ == "__main__":
 
     TIME = get_actual_datetime()
     LASTACTIVETIME = get_actual_datetime()
-    NEWDAY = False
+    NEWDAY = True
     STARTHOUR = int(20+random.random()*4)
     #STARTHOUR = 13
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
