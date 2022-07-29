@@ -377,8 +377,8 @@ class Analyzer:
             }
             data["links"].append(data_entry)
         
-        for entry in list(G.nodes):
-            data_entry = {"id": entry, "group": "1"} 
+        for entry in list(G.degree()):
+            data_entry = {"id": entry[0], "group": "1", "value": entry[1]} 
             data["nodes"].append(data_entry)
 
         if internal:
@@ -457,6 +457,7 @@ class Analyzer:
 if __name__ =="__main__":
     
     an = Analyzer(1)
+
 
     """
     G = an.get_graph_Data_by_time(daydelta=120)
