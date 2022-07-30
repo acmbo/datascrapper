@@ -379,24 +379,21 @@ class Analyzer:
         
         
         # Min Max normalization
-        max_val = 0
-        min_val = 1
-        sum_vals = 0
-
+        max_val = 8
+        min_val = 0.3
+        
+        max_entries = 0
         
         for entry in list(G.degree()):
             data_entry = {"id": entry[0], "group": "1", "value": entry[1]} 
             
-            if entry[1] > max_val:
-                max_val = entry[1]
-                
-            sum_vals += entry[1]
-                
+            if entry[1]> max_entries:
+                max_entries = entry[1]
             data["nodes"].append(data_entry)
 
         
         for entry in data["nodes"]:
-            entry["value"] = round(min_val + ((entry["value"]  * (max_val -min_val))/ sum_vals),3) 
+            entry["value"] = round(min_val + ((entry["value"]  * (max_val -min_val))/ max_entries),3) 
 
         
 
@@ -476,6 +473,10 @@ class Analyzer:
 if __name__ =="__main__":
     
     an = Analyzer(1)
+    an.send_graph_to_api(endpoint="themeGraphDaily/", internal=False)
+    an.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False)
+    an.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False)
+    print("Done")
     #an.send_graph_to_api(daydelta=150)
 
     """
