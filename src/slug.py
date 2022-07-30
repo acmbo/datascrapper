@@ -17,7 +17,7 @@ from analyzer.arc import Analyzer
 
 
 GLOBALSLEEPTIME = random.randint(3,10)
-GLOBALSLEEPTIME = 0
+#GLOBALSLEEPTIME = 0
 
 
 logger = createStandardLogger(__name__)
@@ -281,7 +281,7 @@ def crawl_dw():
     # Analyzer only for meta api
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
     r = meta_analyzer.post_to_api(internal=False)
-    logger.info("Send Meta to Server: ", r)
+    logger.info("Send Meta to Server: ", str(r))
     
     # Analyzer sends Data from Redis db to meta and theme graph api
     
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-    START_ON_STARTUP = False
+    START_ON_STARTUP = True
     GLOBAL_RUN = True
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
@@ -327,6 +327,7 @@ if __name__ == "__main__":
                 STARTHOUR = int(20+random.random()*4)
                 STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
                 logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
+            
             
             NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
 
