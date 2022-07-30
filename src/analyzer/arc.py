@@ -108,6 +108,17 @@ class Analyzer:
                 if get_themes:
                     themes = d["Themenseiten"]
                     themes = [th.split(",")[0].replace("'","").replace("(","") for th in themes]
+                    
+                    if "Themen" in d.keys():
+                        simplethemes = d["Themen"].split(";")
+                        simplethemes = simplethemes[len(simplethemes)-1]
+                    else:
+                        simplethemes = "No Theme"
+                        
+                    if 'h4article' in d.keys():
+                        h4artilce = d['h4article']
+                    else:
+                        h4artilce = "No Theme"
 
                 for keyword_a in keywords:
                     for keyword_b in keywords:
@@ -116,7 +127,7 @@ class Analyzer:
                                 G.edges[keyword_a, keyword_b]["weight"] += 1
                             else:
                                 if get_themes:
-                                    G.add_edge(keyword_a, keyword_b, weight=1, themes=themes)
+                                    G.add_edge(keyword_a, keyword_b, weight=1, themes=themes, simplethemes=simplethemes, h4artilce=h4artilce)
                                 else:
                                     G.add_edge(keyword_a, keyword_b, weight=1)
         return G    
@@ -132,8 +143,6 @@ class Analyzer:
             networkx.graph: Graph of Keywords, connected by mentionings in articles
         """
         data = self.get_data_filtered_by_time(daydelta=daydelta)
-    
-        G = nx.Graph()
         
         with self.connect_to_db() as db:
             
@@ -363,7 +372,7 @@ class Analyzer:
             elif endpoint == "themeGraphMonthly/":
                 daydelta = 30
         
-        G = self.get_graph_Data_by_time(daydelta=daydelta)
+        G = self.get_graph_Data_by_time(daydelta=daydelta, get_themes=True)
 
         data = {"nodes":[],
                 "links":[]}
@@ -384,7 +393,7 @@ class Analyzer:
         
         max_entries = 0
         
-        for entry in list(G.degree()):
+        for entry in list(G.degree(weight="weight")):
             data_entry = {"id": entry[0], "group": "1", "value": entry[1]} 
             
             if entry[1]> max_entries:
@@ -405,7 +414,36 @@ class Analyzer:
         r = requests.post(url, json=data)
         return r
     
+    def get_author_and_other_data(self, daydelta:int = None):
+        
+        data = self.get_data_filtered_by_time(daydelta=daydelta)
     
+        dfdata = {
+            "autor":[],
+            "date":[],
+            "themenseiten":[],
+            "themen":[],
+            "meistgelesen":[],
+            "h4article":[]
+        }
+
+        for entry in data:
+            d = get_dw_article_by_url(db, entry[0], hset=True)
+            dfdata["autor"].append(d['Autorin/Autor'])
+            dfdata["meistgelesen"].append(d['meistgelesen'])
+            dfdata['date'].append(d["Datum"])
+            if "Themen" in d.keys():
+                dfdata["themen"].append(d["Themen"].split(";")[len(d["Themen"].split(";"))-1])
+            else:
+                dfdata["themen"].append("")
+            if "h4article" in d.keys():
+                dfdata["h4article"].append(d["h4article"])
+            else:
+                dfdata["h4article"].append("")
+            dfdata["themenseiten"].append([t.split(",")[0].replace("'","").replace("(","") for t in d["Themenseiten"]])
+
+        return pd.DataFrame.from_dict(dfdata)
+
     
     
     
@@ -473,9 +511,11 @@ class Analyzer:
 if __name__ =="__main__":
     
     an = Analyzer(1)
-    an.send_graph_to_api(endpoint="themeGraphDaily/", internal=False)
-    an.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False)
-    an.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False)
+    an.send_graph_to_api(daydelta=150)
+    
+    g= an.get_graph_Data_by_time(daydelta=10, get_themes=True)
+    
+
     print("Done")
     #an.send_graph_to_api(daydelta=150)
 

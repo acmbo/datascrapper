@@ -29,8 +29,10 @@ def get_empty_article_meta_data():
     'Autorin/Autor':'',
     'Permalink':'',
     'Themenseiten':'',
+    'Themen':'',
     'Schlagwörter':'',
     'Artikel':'',
+    'h4article':'',
     }
     return dict_article_structure.copy()
 

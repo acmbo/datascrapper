@@ -228,3 +228,13 @@ if __name__ == "__main__":
     add_article_hashset(db, test_article)
     get_dw_article_by_url(db, '/de/wird-russland-belarus-schlucken/a-59181798')
     check_url_exist(db,'/de/wird-russland-belarus-schlucken/a-59181798')
+
+    urls = get_all_dw_article(db)
+    
+    for u_ in urls:
+        x= get_dw_article_by_url(db, u_)
+        if x:
+            if "Themen" in x.keys():
+                print(u_.decode())
+                
+        
