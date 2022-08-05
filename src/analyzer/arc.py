@@ -560,9 +560,9 @@ class Analyzer:
         responses["Post KW tables Week"] = self.send_kw_week_data_to_api(keyW_data_week,  internal=False)
         responses["Post KW tables Month"] = self.send_kw_monht_data_to_api(keyW_data_month, internal=False)
         
-        responses["Post Graph Daily"]  = self.send_graph_to_api(endpoint="themeGraphDaily/", internal=False)
-        responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False)
-        responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False)
+        responses["Post Graph Daily"]  = self.send_graph_to_api(endpoint="themeGraphDaily/", internal=False, get_themes=True)
+        responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False, get_themes=True)
+        responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False, get_themes=True)
         
         responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses
