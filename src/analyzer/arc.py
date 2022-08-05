@@ -358,7 +358,7 @@ class Analyzer:
         return r
     
     
-    def send_graph_to_api(self, endpoint: str = "themeGraphDaily/", internal=True, daydelta:int = None):
+    def send_graph_to_api(self, endpoint: str = "themeGraphDaily/", internal=True, daydelta:int = None, themes:bool =False):
                 
     
         if endpoint not in ["themeGraphWeekly/","themeGraphMonthly/", "themeGraphDaily/"]:
@@ -393,18 +393,33 @@ class Analyzer:
         
         max_entries = 0
         
+        # If themes needed calculate themes in graph. Uses much computationpower
+        if themes:
+            G = self.calc_themes_of_nodes(G)
+        
         for entry in list(G.degree(weight="weight")):
-            data_entry = {"id": entry[0], "group": "1", "value": entry[1]} 
             
+            # Add theme attribute to graph node
+            if themes:
+                
+                if "theme" in G.nodes[entry[0]].keys():
+                    theme = G.nodes[entry[0]]["theme"]
+                else:
+                    theme = "No Theme"
+                
+                data_entry = {"id": entry[0], "group": theme, "value": entry[1]} 
+            else:
+                data_entry = {"id": entry[0], "group": "1", "value": entry[1]} 
+            
+            # Check for maximum value in graph
             if entry[1]> max_entries:
                 max_entries = entry[1]
+                
             data["nodes"].append(data_entry)
 
         
         for entry in data["nodes"]:
             entry["value"] = round(min_val + ((entry["value"]  * (max_val -min_val))/ max_entries),3) 
-
-        
 
         if internal:
             url="http://127.0.0.1:5000/themegraph/" + endpoint
@@ -413,6 +428,7 @@ class Analyzer:
             
         r = requests.post(url, json=data)
         return r
+    
     
     def get_author_and_other_data(self, daydelta:int = None):
         
@@ -428,23 +444,68 @@ class Analyzer:
         }
 
         for entry in data:
-            d = get_dw_article_by_url(db, entry[0], hset=True)
+            
+            with self.connect_to_db() as db:
+                d = get_dw_article_by_url(db, entry[0], hset=True)
+            
             dfdata["autor"].append(d['Autorin/Autor'])
             dfdata["meistgelesen"].append(d['meistgelesen'])
             dfdata['date'].append(d["Datum"])
+            
             if "Themen" in d.keys():
                 dfdata["themen"].append(d["Themen"].split(";")[len(d["Themen"].split(";"))-1])
+                
             else:
                 dfdata["themen"].append("")
+                
             if "h4article" in d.keys():
                 dfdata["h4article"].append(d["h4article"])
+                
             else:
                 dfdata["h4article"].append("")
+                
             dfdata["themenseiten"].append([t.split(",")[0].replace("'","").replace("(","") for t in d["Themenseiten"]])
 
         return pd.DataFrame.from_dict(dfdata)
 
+
+
+    def send_theme_autor_data(self, internal=True, daydelta:int = None):
     
+        d = self.get_author_and_other_data(daydelta=daydelta)
+
+        d["themen"] = d["themen"].apply(lambda x: "No Theme" if x =="" else x)
+
+        anonymiser = {}
+        for i, aut in enumerate(d.autor.unique()):
+            anonymiser[aut] = "Author " + str(i)
+
+        d["autor"] = d["autor"].apply(lambda x: anonymiser[x]) 
+
+        json_d = d.to_dict()
+
+        if internal:
+            url="http://127.0.0.1:5000/themegraph/testjson/"
+        else:
+            url="https://stephanscorner.de/themegraph/testjson/"
+            
+        r = requests.post(url, json=json_d)
+        
+        return r
+    
+    
+    
+    def calc_themes_of_nodes(self, G):
+        """Adds most used Theme to node in Graph"""
+        for n in G.nodes:
+            df = pd.DataFrame.from_dict(dict(G.adj[n])).transpose()
+            df["Counter"]=1
+            mostused_theme = df.groupby("simplethemes").sum().head(1).index[0]
+            mostused_h4 = df.groupby("h4artilce").sum().head(1).index[0]
+            
+            nx.set_node_attributes(G, {n:  {"theme": mostused_theme, "h4":mostused_h4}})
+
+        return G  
     
     
     def main(self):
@@ -481,7 +542,6 @@ class Analyzer:
         responses["Clean Postings Year"] = self.send_delete_to_postings(endpoint = "postingsyear/", internal=False)
         responses["Post Postings Year"] = self.send_postings_to_api(data_complete, endpoint="postingsyear/", internal=False) 
 
-        
         # Clean api db
         ## Raw data
         responses["Clean Month Raw Data"]= self.send_delete_req_raw_month(internal=False)
@@ -503,20 +563,22 @@ class Analyzer:
         responses["Post Graph Daily"]  = self.send_graph_to_api(endpoint="themeGraphDaily/", internal=False)
         responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False)
         responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False)
-
         
-        
+        responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses
 
+
+            
 if __name__ =="__main__":
     
     an = Analyzer(1)
-    an.send_graph_to_api(daydelta=150)
+    #an.send_graph_to_api(daydelta=150, themes=True)
     
-    g= an.get_graph_Data_by_time(daydelta=10, get_themes=True)
+    #g = an.get_graph_Data_by_time(daydelta=10, get_themes=True)
     
-
-    print("Done")
+    
+    an.send_theme_autor_data(internal=True)
+    
     #an.send_graph_to_api(daydelta=150)
 
     """
