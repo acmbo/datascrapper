@@ -482,14 +482,26 @@ class Analyzer:
 
         d["autor"] = d["autor"].apply(lambda x: anonymiser[x]) 
 
-        json_d = d.to_dict()
+        new_data=[]
+    
+        data = d.to_dict()
+        
+        for i in range(len(data["autor"])):
+            tempdict = {'autor':data["autor"][str(i)],
+                    'date': datetime.strptime(data["date"][str(i)],"%d.%M.%Y").isoformat(),
+                    'h4article':data["h4article"][str(i)],
+                    'meistgelesen':data["meistgelesen"][str(i)],
+                    'themen':data["themen"][str(i)],
+                    'themenseiten': data["themenseiten"][str(i)],
+                    'count':1}
+        new_data.append(tempdict)
 
         if internal:
             url="http://127.0.0.1:5000/themegraph/testjson/"
         else:
             url="https://stephanscorner.de/themegraph/testjson/"
             
-        r = requests.post(url, json=json_d)
+        r = requests.post(url, json=new_data)
         
         return r
     
