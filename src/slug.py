@@ -302,7 +302,7 @@ if __name__ == "__main__":
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-    START_ON_STARTUP = False
+    START_ON_STARTUP = True
     GLOBAL_RUN = True
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))

@@ -107,7 +107,7 @@ class Analyzer:
                 
                 if get_themes:
                     themes = d["Themenseiten"]
-                    themes = [th.split(",")[0].replace("'","").replace("(","") for th in themes]
+                    #themes = [th.split(",")[0].replace("'","").replace("(","") for th in themes]
                     
                     if "Themen" in d.keys():
                         simplethemes = d["Themen"].split(";")
@@ -586,12 +586,13 @@ class Analyzer:
 if __name__ =="__main__":
     
     an = Analyzer(1)
+    an.main()
     #an.send_graph_to_api(daydelta=150, themes=True)
     
     #g = an.get_graph_Data_by_time(daydelta=10, get_themes=True)
     
     
-    an.send_theme_autor_data(internal=True)
+    #an.send_theme_autor_data(internal=True)
     
     #an.send_graph_to_api(daydelta=150)
 

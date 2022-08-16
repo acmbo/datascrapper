@@ -1,6 +1,6 @@
 from db.redis_dw import get_dw_article_by_url, REDISDB, get_db, savedb, add_article_hashset
 from dw.article_v_02 import extract_article_data
-from dw.article import extract_article_data
+#from dw.article import extract_article_data
 from dw.mainpage import get_empty_article_meta_data
 from analyzer.arc import Analyzer
 import requests
@@ -37,9 +37,10 @@ for _url, _date in tqdm.tqdm(data):
 			
 		else:
 			errors.append(_url)
+
 for d in new_data:
 	if d[1]["Datum"]!= "":
 		add_article_hashset(db, d[1])
 		
-get_dw_article_by_url(db, url)
+#get_dw_article_by_url(db, url)
 
