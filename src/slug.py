@@ -188,7 +188,7 @@ def crawl_dw():
     meta["Scrapper"] = "Raspberry Pi 2+"
     meta["Errors"] = 0
     
-    url_source = "https://www.dw.com/"     # Needed fpr building hrefs-urls
+    url_source = "https://www.dw.com"     # Needed fpr building hrefs-urls
 
     extracted_articles = get_dw_front_pages_data()
     logger.info(" -- Sucessfull scraped mainpages-- ")
@@ -281,7 +281,7 @@ def crawl_dw():
     # Analyzer only for meta api
     meta_analyzer = Meta_Analyzer( REDISDB, data=meta)
     r = meta_analyzer.post_to_api(internal=False)
-    logger.info("Send Meta to Server: ", str(r))
+    logger.info("Send Meta to Server")
     
     # Analyzer sends Data from Redis db to meta and theme graph api
     
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
                             
-    START_ON_STARTUP = True
+    START_ON_STARTUP = False
     GLOBAL_RUN = True
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))

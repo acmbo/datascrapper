@@ -358,7 +358,9 @@ class Analyzer:
         return r
     
     
-    def send_graph_to_api(self, endpoint: str = "themeGraphDaily/", internal=True, daydelta:int = None, themes:bool =False):
+    def send_graph_to_api(self, endpoint: str = "themeGraphDaily/",
+                          internal=True, daydelta:int = None,
+                          get_themes:bool =False):
                 
     
         if endpoint not in ["themeGraphWeekly/","themeGraphMonthly/", "themeGraphDaily/"]:
@@ -372,7 +374,7 @@ class Analyzer:
             elif endpoint == "themeGraphMonthly/":
                 daydelta = 30
         
-        G = self.get_graph_Data_by_time(daydelta=daydelta, get_themes=True)
+        G = self.get_graph_Data_by_time(daydelta=daydelta, get_themes=get_themes)
 
         data = {"nodes":[],
                 "links":[]}
@@ -394,13 +396,13 @@ class Analyzer:
         max_entries = 0
         
         # If themes needed calculate themes in graph. Uses much computationpower
-        if themes:
+        if get_themes:
             G = self.calc_themes_of_nodes(G)
         
         for entry in list(G.degree(weight="weight")):
             
             # Add theme attribute to graph node
-            if themes:
+            if get_themes:
                 
                 if "theme" in G.nodes[entry[0]].keys():
                     theme = G.nodes[entry[0]]["theme"]
@@ -576,7 +578,7 @@ class Analyzer:
         responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False, get_themes=True)
         responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False, get_themes=True)
         
-        responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
+        #responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses
 
 
