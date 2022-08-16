@@ -37,6 +37,9 @@ for _url, _date in tqdm.tqdm(data):
 			
 		else:
 			errors.append(_url)
-
+for d in new_data:
+	if d[1]["Datum"]!= "":
+		add_article_hashset(db, d[1])
+		
 get_dw_article_by_url(db, url)
-add_article_hashset(db, article)
+
