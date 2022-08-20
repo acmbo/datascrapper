@@ -13,6 +13,13 @@ from dw.mainpage import find_term_in_bstag_attr, partialfind_term_in_bstag_attr,
 from dw.utils_article import remove_double_entrys_in_article, add_value_to_article_key,\
                             check_ref_is_a_dwhomepage
 
+def import_blacklist():
+    txt:str
+    with open("dw/blacklist.txt", "r") as f:
+        txt = f.read()
+        
+    return txt.split("\n")
+
 
 def find_double_and_unique_entrys_to_list(list1: list, list2: list):
     """Finds double entry and unique entrys in a list and returns a tuple of both results
@@ -99,7 +106,7 @@ def scrape_dw_theme_page(html:str):
     Returns:
         (list) : list of article meta data dictinionarys
     """
-
+    blacklist = import_blacklist()
 
     soup = BeautifulSoup(html, "html.parser")
     divs = soup.find_all("div")
@@ -116,6 +123,7 @@ def scrape_dw_theme_page(html:str):
 
     #Get all hrefs from website
     hrefs = get_all_hrefs_from_page(soup)
+    hrefs = [href for href in hrefs if href not in blacklist]
     
     # Extract metadata from mainarticle
     mainarticle = find_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm=['col4a'])

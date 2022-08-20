@@ -30,6 +30,7 @@ get_html_via_webscrapingapi = proxy_probabiltys["get_html_via_webscrapingapi"]
 get_html_via_scrapingapi = proxy_probabiltys["get_html_via_scrapingapi"]
 
 
+
 def preprocess_meta_data(article: dict):
     """preprocesses the data inside article dictionary for later
        readybilty within python. Changes not python standard datatypes
@@ -123,7 +124,15 @@ def get_dw_front_pages_data():
             "https://www.dw.com/de/themen/kultur/s-1534",
             "https://www.dw.com/de/themen/sport/s-12284",
             "https://www.dw.com/de/themen/welt/s-100029",
-            "https://www.dw.com/de/wirtschaft/s-1503"]
+            "https://www.dw.com/de/wirtschaft/s-1503",
+            "https://www.dw.com/de/asien/s-12326",
+            "https://www.dw.com/de/amerika/s-12325",
+            "https://www.dw.com/de/afrika/s-12324",
+            "https://www.dw.com/de/nahost/s-12323",
+            "https://www.dw.com/de/europa/s-12322",
+            "https://www.dw.com/de/coronavirus/s-42108563",
+            
+            ]
 
 
 

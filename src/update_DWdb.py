@@ -3,9 +3,12 @@ from dw.article_v_02 import extract_article_data
 #from dw.article import extract_article_data
 from dw.mainpage import get_empty_article_meta_data
 from analyzer.arc import Analyzer
-import requests
+from utils.proxy import choose_proxy_from_proxyrotation
+
 import time
 import tqdm
+
+
 # Setup
 db = get_db(db_number=REDISDB)
 an = Analyzer(REDISDB)
@@ -18,12 +21,17 @@ new_data = []
 
 for _url, _date in tqdm.tqdm(data):
 	if _date == "":
-		r = requests.get("https://www.dw.com" + _url)
+
+		choosen_proxy = choose_proxy_from_proxyrotation()
+		html = choosen_proxy[0]("https://www.dw.com" + _url)
+  
 		
-		if r.status_code == 200:
+		if html:
+      
 			empty_art = get_empty_article_meta_data()
-			html = r.text
+   
 			filled_art = extract_article_data(empty_art, html)
+   
 			old_art = get_dw_article_by_url(db, _url)
 			
 			for key, val in old_art.items():
@@ -32,6 +40,7 @@ for _url, _date in tqdm.tqdm(data):
 				if filled_art[key] == "":
 					print("Still Empty")
 			new_data.append((_url, old_art))
+   
 			print("sleep")
 			time.sleep(3)
 			
@@ -43,4 +52,4 @@ for d in new_data:
 		add_article_hashset(db, d[1])
 		
 #get_dw_article_by_url(db, url)
-
+savedb()
