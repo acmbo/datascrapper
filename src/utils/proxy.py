@@ -84,13 +84,27 @@ def local_url(url:str):
     return urlopen(url)
 
 
-def local_request(url:str):
+def local_url_request(url:str):
+    """Function for local request.
+    Seperated for testing"""
+    return requests.get(url)
+
+
+def local_request(url:str, _functype="request"):
     
     try:
-        page = local_url(url)
-
-        html_bytes = page.read()
-        html = html_bytes.decode("utf_8")
+        if _functype == "request":
+            page = local_url_request(url)
+            
+            if page.status_code == 200:
+                html = page.text
+            else:
+                html = None
+                        
+        elif _functype == "urllib":
+            page = local_request(url)
+            html_bytes = page.read()
+            html = html_bytes.decode("utf_8")
         return html
     
     except Exception as e:

@@ -99,4 +99,23 @@ def remove_double_entrys_in_article(articles: list):
     return new_content, double_hrefs
         
     
-    
+
+def check_ref_is_a_dwhomepage(href: str):
+    """
+    checks if dw href link ends with a Tag like "s-1239142". "s" Tag indicates, that a page is a homepage or themepage. Articles are 
+    marked with "a". Videos with "av".
+     
+    Args:
+        href (str): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    if href != "":
+        content = href.split("/")
+        article_Tag = content[len(content)-1][0]
+        
+        if article_Tag == "s":
+            return True
+        else:
+            return False

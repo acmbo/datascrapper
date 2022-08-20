@@ -1,7 +1,7 @@
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
 from bs4 import element 
-from dw.mainpage import partialfind_term_in_bstag_attr
+from datetime import datetime
+import re
 
 
 def get_article_text(longtext: element.ResultSet):
@@ -46,9 +46,6 @@ def extract_article_data(article: dict, html:str):
     """
     
     soup = BeautifulSoup(html, "html.parser")
-    divs = soup.find_all("div") 
-    body = partialfind_term_in_bstag_attr(divs, search_in_attr='id', searchterm='bodyContent')  
-    body_divs = body[0].find_all("div")
     
     # Get theme of website
     navpath = soup.find("div", {"id": "navPath"})
@@ -63,85 +60,96 @@ def extract_article_data(article: dict, html:str):
     if h4article:
         article["h4article"]= h4article.text
     
-    # get sidebar meta data
-    meta_data = partialfind_term_in_bstag_attr(body_divs, search_in_attr='class', searchterm='col3')  # changed from col1 to col3
     
+    for li in soup.find_all("li"):
         
-    # extract  sidebar meta data
-    #   Data from Website:
-    #   include = ["Datum","Autorin/Autor","Permalink"]
-    #   exclude = ["Drucken",]
-    #   special = ["Themenseiten","Schlagwörter"]
-    
-    include = ["Datum","Autorin/Autor","Permalink"]
-    
-    for x in meta_data[0].find_all("li"):
-        
-        header = x.find_all("strong")
-        
-        if len(header)>0:
+        if "Datum" in li.text:
+            pattern: str = "[0-9]{2}.[0-9]{2}.[0-9]{4}"
+            art_date: list = re.findall(pattern, li.text)
             
-            key = x.find_all("strong")[0].text
-            
-            if key in include:
+            if len(art_date)==1:
+                article["Datum"] = art_date[0]
                 
-                key_name = x.find_all("strong")[0].text
-                val = x.text.replace(key_name,'').replace('\n','')
-                article[key_name] = val
+        if 'Themenseiten' in li.text:
             
-            if key == "Themenseiten":
+            found_themes: list = []
+            
+            for a in li.findAll("a"):
+                found_themes.append((a.text, a["href"]))
                 
-                key_name = x.find_all("strong")[0].text
-                val = [(entry.text, entry['href']) for entry in x.find_all("a")]
-                article[key_name] = val
+            article['Themenseiten'] = found_themes
+        
+        
+        if 'Permalink' in li.text:
             
-            if key == "Schlagwörter":
+            for i, c in enumerate(li.contents):
 
-                key_name = x.find_all("strong")[0].text
-                val = [entry.text for entry in x.find_all("a")]
-                article[key_name] = val
-    
-    
-    # get article body
-    _article = partialfind_term_in_bstag_attr(body_divs, search_in_attr='class', searchterm='col3')
-    
-    #extract article tags
-    longtext = partialfind_term_in_bstag_attr(_article[0].find_all('div'), search_in_attr='class', searchterm='longText')
+                if "Permalink" in str(c):
+                    try:
+                        article['Permalink'] = li.contents[i+1].replace("\n","")
+                    except:
+                        print("No Autor found")
+        
+            
+        if 'Schlagwörter' in li.text:
+            
+            found_key: list = []
+            
+            for a in li.findAll("a"):
+                found_key.append(a.text)
+                
+            article['Schlagwörter'] = found_key
+        
+        
+        if "Autorin" in li.text or "Autor" in li.text:
+
+            for i, c in enumerate(li.contents):
+
+                if "Autorin" in str(c) or "Autor" in str(c):
+                    try:
+                        article['Autorin/Autor'] = li.contents[i+1].replace("\n","")
+                    except:
+                        print("No Autor found")
+                                        
+    #DONT DELETE!!!!!
     
     # store text data
-    text = {'Text':'',
-            'Title':'',
-            'Article_Scene':''}
+    #text = {'Text':'',
+    #        'Title':'',
+    #        'Article_Scene':''}
     
-    text['Text'] = get_article_text(longtext[0])    # Longtext as tags
+    # Right now text isnt needed for analysis!
+    #    longtext = soup.find_all("div",{"class":"longText"})
+    # article['Artikel'] = ' | '.join([get_article_text(txt) for txt in longtext])
             
-            
-    # Gets more information from text
-    childs = _article[0].findChildren()
-    parts_seen = 0
-    
-    for a in childs:
-        #if a.name in ['h4','h3','h2','h1','p']:
-        #    
-        #    print(a)
-        #    print(a.text)
-        #    print('----------------------------------')
-                    
-        if a.name == 'h1':
-            
-            text['Title'] = a.text
-            
-        if a.name == 'h4':
-            
-            text['Article_Scene'] = a.text
+    #for content in soup.find_all("div",{"id":"bodyContent"}):
         
-        #if a.name in ['h3','h2','p'] and parts_seen > 1:
-        #    
-        #    text['Text'] = text['Text'] + '\n ' + str(a.text)
-        
-        parts_seen += 1
+    #    if content.find("h1"):
+    #        
+    #        text['Title'] = content.find("h1").text
+    #        
+    #    if content.find("h4"):
+    #        
+    #        text['Article_Scene'] = content.find("h4").text
     
-    article['Artikel'] = text
+    article["scrapedate"] = datetime.now().isoformat()
     
     return article
     
+    
+
+if __name__ == "__main__":
+    
+    import requests
+    from mainpage import get_empty_article_meta_data
+    
+
+        
+    base = "https://www.dw.com"
+    url = '/de/ukraine-aktuell-ukrainer-spenden-ihrer-armee-präzise-satellitenfotos/a-62873667'
+    
+    html = requests.get(base+url).text
+    
+    article = get_empty_article_meta_data()
+    
+    extract_article_data(article, html)

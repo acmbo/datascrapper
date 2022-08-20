@@ -7,11 +7,12 @@ from utils.time import time_is_passed_by_actualTime, \
     select_random_time_of_a_day, get_actual_datetime, check_change_of_day_in_datetimevalues
 from utils.loggers import createStandardLogger    
 from utils.settings import proxy_probabiltys
+
 from scrape_dw import scrape_dw_theme_page
 from dw.utils_article import remove_double_entrys_in_article
-from dw.article import extract_article_data
-#from db.mongo import get_db, add_article, check_url_exist
+from dw.article_v_02 import extract_article_data
 from db.redis_dw import get_db, add_article_hashset, check_url_exist, REDISDB
+
 from analyzer.meta import Meta_Analyzer
 from analyzer.arc import Analyzer
 
@@ -156,9 +157,7 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
                                                             url=str(_url_source + article['url'])))
             return 1, extracted_articles
             
-        else:
-            artlen=len(extracted_articles)
-            
+        else:            
             extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
             
             add_article_hashset(_db, extracted_articles[idx])
@@ -168,8 +167,7 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
     except Exception as e:
         logger.error("Error in Slug: {url} = \n {e} ".format(e=e,
                                                             url=str(_url_source + article['url'])))
-        artlen=len(extracted_articles)
-        logger.error(f"Error in Slug: used idx = {idx}; articles len = {artlen}")
+
         return 1, extracted_articles
         
 
@@ -221,16 +219,13 @@ def crawl_dw():
         
         if check_url_exist(db,art['url']) == False:
             
-            sleeptime = GLOBALSLEEPTIME
-            
-            logger.info("sleeping {num} secs...".format(num=sleeptime))
-            
+            sleeptime = random.int(1, GLOBALSLEEPTIME)
+                      
             time.sleep(sleeptime)
             
             exartlen = len(extracted_articles)
             
-            logger.info(f"Article {idx} of {exartlen} extracted, used function " + str(proxy[0]))
-            
+            #logger.info(f"Article {idx} of {exartlen} extracted, used function " + str(proxy[0]))
             
             status , extracted_articles = execute_get_request_article(proxy_func = proxy[0],
                                         _url_source=url_source,
@@ -247,7 +242,7 @@ def crawl_dw():
                                         get_html_via_webscrapingapi=get_html_via_webscrapingapi,
                                         get_html_via_scrapingapi=get_html_via_scrapingapi) 
                 
-                logger.warning("Empty html. Try with new created proxy -" + str(proxy[0]))
+                logger.warning(f"Empty html. Try with new created proxy -" + str(proxy[0]))
                 
                 status , extracted_articles = execute_get_request_article(proxy_func = proxy[0],
                             _url_source=url_source,
@@ -270,12 +265,15 @@ def crawl_dw():
         else:
             #logger.info("url in db found")
             pass
+        
     db.bgsave()
     
     logger.info("End of Crawl")
     json_string = json.dumps(meta)
+    
     with open("scrapper_meta.json", "w") as i :
         json.dump(json_string, i, default=str)
+        
     logger.info("Write to json")
     
     # Analyzer only for meta api
@@ -283,8 +281,8 @@ def crawl_dw():
     r = meta_analyzer.post_to_api(internal=False)
     logger.info("Send Meta to Server")
     
-    # Analyzer sends Data from Redis db to meta and theme graph api
     
+    # Analyzer sends Data from Redis db to meta and theme graph api
     redis_analyzer = Analyzer(REDISDB)
     logger.info("Load Analyzer")
     rep = redis_analyzer.main() #Responses from Api
@@ -304,35 +302,47 @@ if __name__ == "__main__":
                             
     START_ON_STARTUP = True
     GLOBAL_RUN = True
+
     
     logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
 
     while GLOBAL_RUN:
-        try:
-            if START_ON_STARTUP == True:
-                logger.info("Slug start time on start up: {n}".format(n=str(TIME)))
-                crawl_dw()
-                START_ON_STARTUP = False
 
-            TIME = get_actual_datetime()    
+        if START_ON_STARTUP == True:
+            logger.info("Slug start time on start up: {n}".format(n=str(TIME)))
             
-            if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
-                
-                logger.info("Slug start time: {n}".format(n=str(TIME)))
+            try:
                 crawl_dw()
+            except Exception as e:
+                logger.error(f"Slug error: {e}")
                 
-                LASTACTIVETIME = get_actual_datetime()
-                
-                # Data for next run
-                STARTHOUR = int(20+random.random()*4)
-                STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
-                logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
-            
-            
-            NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
+            START_ON_STARTUP = False
 
-            time.sleep(300)
+        TIME = get_actual_datetime()    
+        
+        if NEWDAY and time_is_passed_by_actualTime(STARTTIMEONNEWDAY):
             
-        except Exception as e:
-            logger.error(f"Slug error: {e}")
+            logger.info("Slug start time: {n}".format(n=str(TIME)))
+            
+            try:
+                crawl_dw()
+            
+            except Exception as e:
+                
+                logger.error(f"Slug error: {e}")
+            
+            LASTACTIVETIME = get_actual_datetime()
+            
+            # Data for next run
+            STARTHOUR = int(20+random.random()*4)
+            STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
+            logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
+        
+        
+        NEWDAY = check_change_of_day_in_datetimevalues(TIME,LASTACTIVETIME)
+
+        time.sleep(300)
+            
+
+
 
