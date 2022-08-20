@@ -204,8 +204,6 @@ def crawl_dw():
 
     #Conect to redisdb and preqesiuts
     db = get_db() 
-    
-    """
 
     #random_int = 0  #commented out from former version of the script
     
@@ -268,8 +266,7 @@ def crawl_dw():
             if status ==0:
                 
                 meta["Articles"] +=1
-                
-    """
+
     db.bgsave()
     
     # Send Data to api if website
