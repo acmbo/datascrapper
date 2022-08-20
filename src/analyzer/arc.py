@@ -435,6 +435,7 @@ class Analyzer:
     def get_author_and_other_data(self, daydelta:int = None):
         
         data = self.get_data_filtered_by_time(daydelta=daydelta)
+        
     
         dfdata = {
             "autor":[],
@@ -446,7 +447,7 @@ class Analyzer:
         }
 
         for entry in data:
-            
+
             with self.connect_to_db() as db:
                 d = get_dw_article_by_url(db, entry[0], hset=True)
             
@@ -466,8 +467,15 @@ class Analyzer:
             else:
                 dfdata["h4article"].append("")
                 
-            dfdata["themenseiten"].append([t.split(",")[0].replace("'","").replace("(","") for t in d["Themenseiten"]])
-
+            if any([True for i in d["Themenseiten"] if type(i)==str]):
+                
+                dfdata["themenseiten"].append([t.split(",")[0].replace("'","").replace("(","") for t in d["Themenseiten"]])
+            
+            elif any([True for i in d["Themenseiten"] if type(i)==list]):
+                dfdata["themenseiten"].append([t[0].replace("'","").replace("(","") for t in d["Themenseiten"]])
+            else:
+                dfdata["themenseiten"].append("")  
+                       
         return pd.DataFrame.from_dict(dfdata)
 
 
@@ -578,6 +586,7 @@ class Analyzer:
         responses["Post Graph Daily"]  = self.send_graph_to_api(endpoint="themeGraphDaily/", internal=False, get_themes=True)
         responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False, get_themes=True)
         responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False, get_themes=True)
+        
         
         responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses
