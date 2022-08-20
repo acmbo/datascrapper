@@ -43,7 +43,9 @@ def preprocess_meta_data(article: dict):
         article (dict): preprocessed dictionary
         
     """
-    logger.info("Checkpoint - lowerfunc")
+
+    # logger.info("Checkpoint - lowerfunc")
+    
     for key, val in article.items():
         if type(val) == bool:
             continue
@@ -76,10 +78,8 @@ def extract_articles_from_urlist_of_dw_theme_pages(urls: list):
     extracted_articles = []
     
     for url in urls:
-        #get random proxy
         
         run=True
-        print(url)
         
         logger.info("current url: {_url}".format(_url=url))
         
@@ -87,7 +87,7 @@ def extract_articles_from_urlist_of_dw_theme_pages(urls: list):
             
             sleeptime = GLOBALSLEEPTIME 
             
-            logger.info("sleeping {num} secs...".format(num=sleeptime))
+            #logger.info("sleeping {num} secs...".format(num=sleeptime))
             
             time.sleep(sleeptime)
             
@@ -170,10 +170,12 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
             extracted_articles[idx] = preprocess_meta_data(extract_article_data(article, html))
             
             add_article_hashset(_db, extracted_articles[idx])
-            logger.info(" -- Sucessfull scraped {url} -- ".format(url=_url_source + article['url']))
+            #logger.info(" -- Sucessfull scraped {url} -- ".format(url=_url_source + article['url']))
+            
             return 0, extracted_articles
             
     except Exception as e:
+        
         logger.error("Error in Slug: {url} = \n {e} ".format(e=e,
                                                             url=str(_url_source + article['url'])))
 
@@ -197,11 +199,13 @@ def crawl_dw():
     
     url_source = "https://www.dw.com"     # Needed fpr building hrefs-urls
 
-    extracted_articles = get_dw_front_pages_data()
+    #extracted_articles = get_dw_front_pages_data()
     logger.info(" -- Sucessfull scraped mainpages-- ")
 
     #Conect to redisdb and preqesiuts
     db = get_db() 
+    
+    """
 
     #random_int = 0  #commented out from former version of the script
     
@@ -211,9 +215,6 @@ def crawl_dw():
                                             get_html_via_scrapingapi=get_html_via_scrapingapi)    # load a proxy for consistency of code
     backed_arts = []
 
-    #TO DO
-    # - alle states überprüfen
-    # - picture seiten werden nicht korrekt gesrapped
     
     logger.info("Number of Articles found: {num}".format(num=len(extracted_articles)))
     
@@ -223,18 +224,17 @@ def crawl_dw():
                                                 get_html_via_tor=get_html_via_tor,
                                                 get_html_via_webscrapingapi=get_html_via_webscrapingapi,
                                                 get_html_via_scrapingapi=get_html_via_scrapingapi) 
-        #logger.info("proxy with {s} url".format(s=proxy[1]))
     
         
         if check_url_exist(db,art['url']) == False:
             
-            sleeptime = random.int(1, GLOBALSLEEPTIME)
+            sleeptime = random.randint(0, GLOBALSLEEPTIME)
                       
             time.sleep(sleeptime)
             
             exartlen = len(extracted_articles)
             
-            #logger.info(f"Article {idx} of {exartlen} extracted, used function " + str(proxy[0]))
+            logger.info(f"Article {idx} of {exartlen} extracted, used function " + str(proxy[0]))
             
             status , extracted_articles = execute_get_request_article(proxy_func = proxy[0],
                                         _url_source=url_source,
@@ -269,13 +269,10 @@ def crawl_dw():
                 
                 meta["Articles"] +=1
                 
-                    
-                
-        else:
-            #logger.info("url in db found")
-            pass
-        
+    """
     db.bgsave()
+    
+    # Send Data to api if website
     
     logger.info("End of Crawl")
     json_string = json.dumps(meta)
@@ -297,6 +294,8 @@ def crawl_dw():
     rep = redis_analyzer.main() #Responses from Api
     logger.info(f"Send graph data to server: {rep}")
 
+    
+    
     
 
 if __name__ == "__main__":
@@ -320,10 +319,10 @@ if __name__ == "__main__":
         if START_ON_STARTUP == True:
             logger.info("Slug start time on start up: {n}".format(n=str(TIME)))
             
-            try:
-                crawl_dw()
-            except Exception as e:
-                logger.error(f"Slug error: {e}")
+            #try:
+            crawl_dw()
+            #except Exception as e:
+                #logger.error(f"Slug error: {e}")
                 
             START_ON_STARTUP = False
 

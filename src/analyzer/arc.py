@@ -489,14 +489,15 @@ class Analyzer:
         data = d.to_dict()
         
         for i in range(len(data["autor"])):
-            tempdict = {'autor':data["autor"][str(i)],
-                    'date': datetime.strptime(data["date"][str(i)],"%d.%M.%Y").isoformat(),
-                    'h4article':data["h4article"][str(i)],
-                    'meistgelesen':data["meistgelesen"][str(i)],
-                    'themen':data["themen"][str(i)],
-                    'themenseiten': data["themenseiten"][str(i)],
+            tempdict = {'autor':data["autor"][i],
+                    'date': datetime.strptime(data["date"][i],"%d.%M.%Y").isoformat(),
+                    'h4article':data["h4article"][i],
+                    'meistgelesen':data["meistgelesen"][i],
+                    'themen':data["themen"][i],
+                    'themenseiten': data["themenseiten"][i],
                     'count':1}
-        new_data.append(tempdict)
+            
+        new_data.append(tempdict)        
 
         if internal:
             url="http://127.0.0.1:5000/themegraph/testjson/"
@@ -578,7 +579,7 @@ class Analyzer:
         responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False, get_themes=True)
         responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False, get_themes=True)
         
-        #responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
+        responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses
 
 
