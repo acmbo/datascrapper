@@ -199,7 +199,7 @@ def crawl_dw():
     
     url_source = "https://www.dw.com"     # Needed fpr building hrefs-urls
 
-    #extracted_articles = get_dw_front_pages_data()
+    extracted_articles = get_dw_front_pages_data()
     logger.info(" -- Sucessfull scraped mainpages-- ")
 
     #Conect to redisdb and preqesiuts
