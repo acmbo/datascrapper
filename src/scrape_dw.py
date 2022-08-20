@@ -9,9 +9,8 @@ from bs4 import element             # Import for Documentation purposes
 from dw.mainpage import find_term_in_bstag_attr, partialfind_term_in_bstag_attr, \
                         extract_basic_article_meta, extract_main_article_meta,\
                         get_empty_article_meta_data
-from dw.article_v_02 import extract_article_data
-from dw.utils_article import remove_double_entrys_in_article,\
-                            print_articlesdict_with_some_value, add_value_to_article_key,\
+                        
+from dw.utils_article import remove_double_entrys_in_article, add_value_to_article_key,\
                             check_ref_is_a_dwhomepage
 
 

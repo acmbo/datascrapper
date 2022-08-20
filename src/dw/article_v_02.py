@@ -110,7 +110,19 @@ def extract_article_data(article: dict, html:str):
                         article['Autorin/Autor'] = li.contents[i+1].replace("\n","")
                     except:
                         print("No Autor found")
-                                        
+    
+    
+    if article["title"] == "":
+        title = soup.find("h1")
+        if title:
+            article["title"] = title.text
+                        
+    if article['abstract'] == "":
+        intro = soup.find("p", {"class":"intro"}) 
+        if intro:
+            article['abstract'] = intro.text           
+                        
+                                  
     #DONT DELETE!!!!!
     
     # store text data
@@ -134,6 +146,12 @@ def extract_article_data(article: dict, html:str):
     
     article["scrapedate"] = datetime.now().isoformat()
     
+    url = article["url"]
+
+    if len(url.split("/")) > 0:
+        if "av" in url.split("/")[len(url.split("/"))-1]:
+            article["video"]=True 
+            
     return article
     
     
