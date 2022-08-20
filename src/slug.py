@@ -316,10 +316,10 @@ if __name__ == "__main__":
         if START_ON_STARTUP == True:
             logger.info("Slug start time on start up: {n}".format(n=str(TIME)))
             
-            #try:
-            crawl_dw()
-            #except Exception as e:
-                #logger.error(f"Slug error: {e}")
+            try:
+                crawl_dw()
+            except Exception as e:
+                logger.error(f"Slug error: {e}")
                 
             START_ON_STARTUP = False
 
