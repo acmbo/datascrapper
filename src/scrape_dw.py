@@ -91,6 +91,10 @@ def get_all_hrefs_from_page(soup, add_root_page: str = ""):
     
     hrefs = [href for href in hrefs if href.split("/")[1] == "de"]
     
+    hrefs = [href for href in hrefs if not "http" in href]
+    
+    hrefs = [href for href in hrefs if not "www." in href]
+    
     return hrefs
 
 
