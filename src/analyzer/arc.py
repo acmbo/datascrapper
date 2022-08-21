@@ -377,7 +377,9 @@ class Analyzer:
         G = self.get_graph_Data_by_time(daydelta=daydelta, get_themes=get_themes)
 
         data = {"nodes":[],
-                "links":[]}
+                "links":[],
+                "groups":[]}
+        
         for entry in list(G.edges):
             source, target = entry
             data_entry={
@@ -399,6 +401,8 @@ class Analyzer:
         if get_themes:
             G = self.calc_themes_of_nodes(G)
         
+        unique_themes: list = []
+        
         for entry in list(G.degree(weight="weight")):
             
             # Add theme attribute to graph node
@@ -410,6 +414,11 @@ class Analyzer:
                     theme = "No Theme"
                 
                 data_entry = {"id": entry[0], "group": theme, "value": entry[1]} 
+                
+                # Get all unique themes for graph
+                if theme not in unique_themes:
+                    unique_themes.append(theme)
+                    
             else:
                 data_entry = {"id": entry[0], "group": "1", "value": entry[1]} 
             
@@ -422,6 +431,9 @@ class Analyzer:
         
         for entry in data["nodes"]:
             entry["value"] = round(min_val + ((entry["value"]  * (max_val -min_val))/ max_entries),3) 
+            
+        for _id, entry in enumerate(unique_themes):
+            data["groups"].append({"id": _id, "theme": entry})
 
         if internal:
             url="http://127.0.0.1:5000/themegraph/" + endpoint
@@ -480,8 +492,21 @@ class Analyzer:
 
 
 
-    def send_theme_autor_data(self, internal=True, daydelta:int = None):
-    
+    def send_theme_autor_data(self, 
+                              internal=True, 
+                              daydelta:int = None,
+                              endpoint: str = "usedthemesMonthly/"
+                              ):
+                                  
+        if endpoint not in ["usedthemesMonthly/","usedthemesWeekly/"]:
+            return "Wrong Endpoints" 
+
+        if not daydelta:
+            if endpoint == "usedthemesWeekly/":
+                daydelta = 7
+            elif endpoint == "usedthemesMonthly/":
+                daydelta = 30
+                
         d = self.get_author_and_other_data(daydelta=daydelta)
 
         d["themen"] = d["themen"].apply(lambda x: "No Theme" if x =="" else x)
@@ -495,22 +520,22 @@ class Analyzer:
         new_data=[]
     
         data = d.to_dict()
-        
+         
         for i in range(len(data["autor"])):
             tempdict = {'autor':data["autor"][i],
-                    'date': datetime.strptime(data["date"][i],"%d.%M.%Y").isoformat(),
+                    'date': datetime.strptime(data["date"][i],"%d.%m.%Y").strftime("%Y-%m-%d"),
                     'h4article':data["h4article"][i],
                     'meistgelesen':data["meistgelesen"][i],
                     'themen':data["themen"][i],
                     'themenseiten': data["themenseiten"][i],
                     'count':1}
             
-        new_data.append(tempdict)        
+            new_data.append(tempdict.copy())       
 
         if internal:
-            url="http://127.0.0.1:5000/themegraph/testjson/"
+            url="http://127.0.0.1:5000/themegraph/" + endpoint
         else:
-            url="https://stephanscorner.de/themegraph/testjson/"
+            url="https://stephanscorner.de/themegraph/" + endpoint
             
         r = requests.post(url, json=new_data)
         
@@ -526,6 +551,11 @@ class Analyzer:
             mostused_theme = df.groupby("simplethemes").sum().head(1).index[0]
             mostused_h4 = df.groupby("h4artilce").sum().head(1).index[0]
             
+            if mostused_theme == "" or mostused_theme == None:
+                mostused_theme = "No Theme"
+                
+            if mostused_h4 == "" or mostused_h4 == None:
+                mostused_h4 = "No Theme"
             nx.set_node_attributes(G, {n:  {"theme": mostused_theme, "h4":mostused_h4}})
 
         return G  
@@ -587,8 +617,10 @@ class Analyzer:
         responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False, get_themes=True)
         responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False, get_themes=True)
         
-        
-        responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
+        responses["theme autor data Weekly"] = self.send_theme_autor_data(internal=False, endpoint = "usedthemesWeekly/")
+        responses["theme autor data Monthly"] = self.send_theme_autor_data(internal=False, endpoint = "usedthemesMonthly/")
+
+        #responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses
 
 
@@ -597,6 +629,8 @@ if __name__ =="__main__":
     
     an = Analyzer(1)
     an.main()
+    
+    
     #an.send_graph_to_api(daydelta=150, themes=True)
     
     #g = an.get_graph_Data_by_time(daydelta=10, get_themes=True)
