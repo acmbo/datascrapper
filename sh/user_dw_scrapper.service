@@ -1,0 +1,13 @@
+it]
+
+Description=scrapper
+
+After=default.target
+
+[Service]
+
+ExecStart=/home/pi/programming/datascrapper/scrapper.sh
+
+[Install]
+
+WantedBy=default.target

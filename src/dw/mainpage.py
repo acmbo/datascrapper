@@ -29,8 +29,11 @@ def get_empty_article_meta_data():
     'Autorin/Autor':'',
     'Permalink':'',
     'Themenseiten':'',
+    'Themen':'',
     'Schlagwörter':'',
     'Artikel':'',
+    'h4article':'',
+    'scrapedate': '',
     }
     return dict_article_structure.copy()
 
@@ -187,7 +190,7 @@ def extract_basic_article_meta(article_hrefs: element.ResultSet):
         try:
             token = part.find('h2')
             if dict_article['title'] != token and token != '':
-                dict_article['title'] = token
+                dict_article['title'] = token.text.replace("\n", "")
         except:
             dict_article['title'] = dict_article['title']
                
@@ -201,3 +204,4 @@ def extract_basic_article_meta(article_hrefs: element.ResultSet):
         foundarticles.append(dict_article.copy())   #deepcopy for ensuring you create new copy
         
     return foundarticles
+

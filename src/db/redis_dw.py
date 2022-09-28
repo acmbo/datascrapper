@@ -1,38 +1,140 @@
 import redis
 import pickle
+import logging
+import os
+
+_filepath = "slug.log"
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(name)s: %(funcName)s: %(message)s")
+
+file_handler = logging.FileHandler(_filepath) 
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+logger.addHandler(logging.StreamHandler())
 
 REDISDB = 1
+PORT=6378   # For Raspberry Pi
+#PORT=6379  # For Dev
 
-def preprocess_for_redis(article_dict):
-    pickled_object = pickle.dumps(article_dict)
-    return pickled_object
+
+def preprocess_for_redis(article_dict, pickle_all=False):
+    """Preprccessing for redis. Redis cant store lists or dictionary with multiple layers. 
+    therefore pickle is used to store a complete dictionary with multiple layers through pickeling
+    or as a second variant store multilayerd parts of a dictionary as bytes.
+
+    Args:
+        article_dict (dict): article data
+        pickle_all (bool, optional): Marker which cpreporcessing should be used. Defaults to False.
+
+    Returns:
+        dict: preprocessed dictionaryy
+    """
+    if pickle_all==True:
+        pickled_object = pickle.dumps(article_dict)
+        return pickled_object
+    
+    else:
+        preprocessed_dict = {}
+        
+        for key, item in article_dict.items():
+            
+            if type(item) in [tuple,list,dict]:
+                preprocessed_dict[key] = pickle.dumps(item)
+                
+            elif type(item) in [float,int,str, bytes, complex]:         
+                preprocessed_dict[key] = item
+               
+            elif type(item) in [bool]:
+                preprocessed_dict[key] = int(item)
+            else:
+                preprocessed_dict[key] = None
+                logger.warning('Unkown Datatype {s} encountered in Preprocessing'.format(s=str(type(item))))
+
+                
+        return preprocessed_dict            
+        
+    #print(str(key) + ' ' + str(item))
 
 
 def preprocess_from_redis(db_value):
     return pickle.loads(db_value)
 
 
+def preprocess_from_redis_hget(db_dict):
+    preprocessed_dict = {}
+    for key, val in db_dict.items():
+        try:
+            preprocessed_dict[key.decode()] = val.decode()
+        except:
+            preprocessed_dict[key.decode()] = pickle.loads(val)
+            
+    return preprocessed_dict
+
+
 def get_db(db_number=REDISDB):
-    db = redis.Redis(host='localhost', port=6379, db=db_number)
+    
+    db = redis.Redis(host='localhost', port=PORT, db=db_number)
+    #ERROR: Cant change logfile and dir while client starts up. Cant pass premade config into py-redis
+    #db.config_set("dir", str(os.getcwd()))
+    
+    #db.config_set("dbfilename", "redis_dw_dumb.db")
+    
+    #db.config_set("logfile", os.path.join(os.getcwd(), "src","db","redis_db_server.log"))
     return db
 
 
-def add_article(db, article):
-    db.set(article["url"], preprocess_for_redis(article))
+def get_dump_location(db):
+    return db.config_get()["dir"]
+
+
+def get_log_filename(db):
+    return db.config_get()["logfile"]
     
+    
+def add_article(db, article):
+    db.set(article["url"], preprocess_for_redis(article, pickle_all=True))
+    
+    
+def add_article_hashset(db, article):
+    """Adds Entry to redis db with hastset, which behaves like a python dictionary. (Keine verschachtelung möglich 
+    in den Dictionarys, deswegen werden Einträge im Preprocess mit pickle gepickeld)
+
+    Args:
+        db (conn): Database connection in redis
+        article (dict): article Data
+    """
+    
+    for key, item in preprocess_for_redis(article, pickle_all=False).items():
+
+        try:
+            db.hset(article["url"], key, item)
+            
+        except Exception as dberror:
+            logger.error("Error Redis add article with hashset: \n {e} \n -----------------------------".format(e=dberror))
+            #print((key,item))
     
     
 def get_first_dw_articles(db):
     pass
 
 
-def get_dw_article_by_url(db, url):
-    return [preprocess_from_redis(db.get(url))]
+def get_dw_article_by_url(db, url, hset=True):
+    try:
+        if hset == True:
+            return preprocess_from_redis_hget(db.hgetall(url))
+        else:
+            return [preprocess_from_redis(db.get(url))]
+    except Exception as e:
+        print(e)
+        return None
+    
 
 
 def get_all_dw_article(db):
     return [keys for keys in db.scan_iter(match='*')]
-
 
 
 def amount_of_articles_exist(db):
@@ -49,11 +151,54 @@ def update_article(db,url,article):
                      upsert=False)
 
 
+def savedb(db):
+    """Creates hardsiks backup"""
+    db.bgsave()
+    return 0
+
+def delete_single_key(db, url):
+    db.delete(url)
+    return 0
+
+
+def create_json(db):
+    import json
+    db_keys = get_all_dw_article(db)
+    db_data = {}
+    
+    for key in db_keys:
+        try:
+            if type(key) ==bytes:
+                key=key.decode()
+                
+            db_data[key] = get_dw_article_by_url(db, key)
+        except:
+            print("invalid Key: ", str(key))
+    #return db_data 
+    with open("redis_db_BU.json", "w") as outfile:
+        json.dump(db_data, outfile)    
+        
+        
+def json_to_dict(json_file):
+    import json
+
+    with open(json_file) as d:
+        dictData = json.load(d)
+    return dictData
+    
+    
+def dict_to_redis(dictionary,db):
+    
+    for key in dictionary.keys():
+        add_article_hashset(db, dictionary[key])
+        
+    return 0
+
 
 if __name__ == "__main__":
 
         
-    db = get_db() 
+    db = get_db(db_number=0) 
 
     test_article = {'url': '/de/wird-russland-belarus-schlucken/a-59181798',
                     'title': '<h2>Wird Russland Belarus schlucken? </h2>',
@@ -80,6 +225,16 @@ if __name__ == "__main__":
                     'Title': 'Wird Russland Belarus schlucken?',
                     'Article_Scene': 'Die Redaktion empfiehlt'}}
 
-    add_article(db, test_article)
+    add_article_hashset(db, test_article)
     get_dw_article_by_url(db, '/de/wird-russland-belarus-schlucken/a-59181798')
     check_url_exist(db,'/de/wird-russland-belarus-schlucken/a-59181798')
+
+    urls = get_all_dw_article(db)
+    
+    for u_ in urls:
+        x= get_dw_article_by_url(db, u_)
+        if x:
+            if "Themen" in x.keys():
+                print(u_.decode())
+                
+        

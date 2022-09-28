@@ -9,9 +9,16 @@ from bs4 import element             # Import for Documentation purposes
 from dw.mainpage import find_term_in_bstag_attr, partialfind_term_in_bstag_attr, \
                         extract_basic_article_meta, extract_main_article_meta,\
                         get_empty_article_meta_data
-from dw.article import extract_article_data
-from dw.utils_article import remove_double_entrys_in_article,\
-                            print_articlesdict_with_some_value, add_value_to_article_key
+                        
+from dw.utils_article import remove_double_entrys_in_article, add_value_to_article_key,\
+                            check_ref_is_a_dwhomepage
+
+def import_blacklist():
+    txt:str
+    with open("dw/blacklist.txt", "r") as f:
+        txt = f.read()
+        
+    return txt.split("\n")
 
 
 def find_double_and_unique_entrys_to_list(list1: list, list2: list):
@@ -63,6 +70,35 @@ def get_hrefs_of_tags(article_hrefs: element.ResultSet, html_tag: str ="a"):
 
 
 
+def get_all_hrefs_from_page(soup, add_root_page: str = ""):
+    """Returns a list of urls ready for use
+
+    Args:
+        soup (bs4.soup): soup of html
+
+    Returns:
+        list: list of urls
+    """
+    # get all links
+    hrefs = [link.get('href') for link in soup.find_all('a') ]
+    # Removes external links
+    hrefs = [href for href in hrefs if href != '' and href != None and href[0] == "/"]
+    #adds a root page to all hrefs
+    if add_root_page != "":
+        hrefs = [add_root_page + href for href in hrefs]
+        
+    hrefs = list(dict.fromkeys(hrefs)) # remove duplicates
+    
+    hrefs = [href for href in hrefs if href.split("/")[1] == "de"]
+    
+    hrefs = [href for href in hrefs if not "http" in href]
+    
+    hrefs = [href for href in hrefs if not "www." in href]
+    
+    return hrefs
+
+
+
 def scrape_dw_theme_page(html:str):
     """Scrapes a theme/main page of dw and returns list of found articles
 
@@ -74,18 +110,7 @@ def scrape_dw_theme_page(html:str):
     Returns:
         (list) : list of article meta data dictinionarys
     """
-
-    #page = urlopen(url)
-
-    #html_bytes = page.read()
-    #html = html_bytes.decode("utf_8")
-
-    #get Title
-    #html.find("<title>")
-    #start_index = html.find("<title>") + len("<title>")
-    #end_index = html.find("</title>")
-    #title = html[start_index:end_index]
-
+    blacklist = import_blacklist()
 
     soup = BeautifulSoup(html, "html.parser")
     divs = soup.find_all("div")
@@ -100,7 +125,10 @@ def scrape_dw_theme_page(html:str):
     articles = []
     hrefs = []
 
-
+    #Get all hrefs from website
+    hrefs = get_all_hrefs_from_page(soup)
+    hrefs = [href for href in hrefs if href not in blacklist]
+    
     # Extract metadata from mainarticle
     mainarticle = find_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm=['col4a'])
 
@@ -111,12 +139,6 @@ def scrape_dw_theme_page(html:str):
         dict_mainarticle = extract_main_article_meta(mainarticle_hrefs)
         articles.extend(dict_mainarticle)
         
-        
-    # Get all Types of article classes on Website
-    attrib_div=[x.attrs for x in partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='easer')]
-    #print(list(set([y for x in attrib_div for y in x['class']])))
-
-
     #Get Basic Teasers
     site_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='basicTeaser')
     site_articles = extract_basic_article_meta(site_div_elements)
@@ -127,9 +149,6 @@ def scrape_dw_theme_page(html:str):
     autTop_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='autoTopicTeaser')
     hrefs.extend(get_hrefs_of_tags(autTop_div_elements))
 
-    # ImgTeaser sind social Media verlinkungen
-    # picTea_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='pictureTeaser')
-    #hrefs = get_hrefs_of_tags(picTea_div_elements)
 
     #Redaktionsempfehlung
     artDetT_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='articleDetailTeaser')
@@ -142,9 +161,11 @@ def scrape_dw_theme_page(html:str):
     hrefs.extend(meistgelesen)
 
     hrefs = list(set(hrefs))
+    hrefs = [href for href in hrefs if not check_ref_is_a_dwhomepage(href)]
     extracted_hrefs = [article['url'] for article in articles]
             
     unique_hrefs, double_hrefs = find_double_and_unique_entrys_to_list(hrefs, extracted_hrefs) 
+
 
     #adding new found hrefs to articles list
     for href in unique_hrefs:
@@ -171,6 +192,12 @@ def scrape_dw_theme_page(html:str):
     new_content, double_hrefs = remove_double_entrys_in_article(articles)
 
     articles = new_content
+    
+    # add Todays date
+    from datetime import datetime
+    for art in articles:
+        
+        art['scrapedate'] = datetime.now().isoformat()
     
     return articles
     

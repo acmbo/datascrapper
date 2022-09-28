@@ -54,6 +54,18 @@ def extract_article_data(article: dict, html:str):
     body = partialfind_term_in_bstag_attr(divs, search_in_attr='id', searchterm='bodyContent')  
     body_divs = body[0].find_all("div")
     
+    # Get theme of website
+    navpath = soup.find("div", {"id": "navPath"})
+    
+    if navpath:
+        ahrefs = navpath.find_all("a")
+        pagetheme = [theme.text.replace("\n", "") for theme in ahrefs]
+        article['Themen'] = ";".join(pagetheme)
+    
+    h4article = soup.find("h4", {"class":"article"})
+    
+    if h4article:
+        article["h4article"]= h4article.text
     
     # get sidebar meta data
     meta_data = partialfind_term_in_bstag_attr(body_divs, search_in_attr='class', searchterm='col1')

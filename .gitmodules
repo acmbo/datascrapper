@@ -1,0 +1,18 @@
+[submodule "src/data/population"]
+	path = src/data/population
+	url = https://github.com/datasets/population.git
+[submodule "src/data/ppp"]
+	path = src/data/ppp
+	url = https://github.com/datasets/ppp.git
+[submodule "src/data/country-list"]
+	path = src/data/country-list
+	url = https://github.com/datasets/country-list.git
+[submodule "src/data/world-cities"]
+	path = src/data/world-cities
+	url = https://github.com/datasets/world-cities.git
+[submodule "src/data/geo-countries"]
+	path = src/data/geo-countries
+	url = https://github.com/datasets/geo-countries.git
+[submodule "src/data/citiesdatabase"]
+	path = src/data/citiesdatabase
+	url = https://github.com/citiesdatabase/citiesdatabase.git
