@@ -300,7 +300,7 @@ if __name__ == "__main__":
     TIME = get_actual_datetime()
     LASTACTIVETIME = get_actual_datetime()
     NEWDAY = True
-    STARTHOUR = int(20+random.random()*4)
+    STARTHOUR = int(20+random.random()*2)
     #STARTHOUR = 13
     STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR,
                                                     )
@@ -339,7 +339,7 @@ if __name__ == "__main__":
             LASTACTIVETIME = get_actual_datetime()
             
             # Data for next run
-            STARTHOUR = int(20+random.random()*4)
+            STARTHOUR = int(20+random.random()*2)
             STARTTIMEONNEWDAY = select_random_time_of_a_day(hour=STARTHOUR)
             logger.info("Scheduled start time for next day: {n}".format(n=str(STARTTIMEONNEWDAY)))
         
