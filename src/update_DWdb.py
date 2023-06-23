@@ -37,11 +37,11 @@ for _url, _date in tqdm.tqdm(data):
 			for key, val in old_art.items():
 				if val == "":
 					old_art[key] = filled_art[key]
-				if filled_art[key] == "":
-					print("Still Empty")
+				#if filled_art[key] == "":pass
+					#print("Still Empty")
 			new_data.append((_url, old_art))
    
-			print("sleep")
+			#print("sleep")
 			time.sleep(3)
 			
 		else:
