@@ -113,13 +113,6 @@ def scrape_dw_theme_page(html:str):
     blacklist = import_blacklist()
 
     soup = BeautifulSoup(html, "html.parser")
-    divs = soup.find_all("div")
-
-    #Get Main Body
-    body_parts = find_term_in_bstag_attr(divs, search_in_attr='id', searchterm='bodyContent')
-    body = body_parts[0]
-    divs_body = body.find_all("div")
-
 
     #For collecting data
     articles = []
@@ -128,38 +121,6 @@ def scrape_dw_theme_page(html:str):
     #Get all hrefs from website
     hrefs = get_all_hrefs_from_page(soup)
     hrefs = [href for href in hrefs if href not in blacklist]
-    
-    # Extract metadata from mainarticle
-    mainarticle = find_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm=['col4a'])
-
-    if len(mainarticle) > 0: 
-        mainarticle = mainarticle[0]
-        mainarticle_hrefs = mainarticle.find_all("a", href=True)
-        
-        dict_mainarticle = extract_main_article_meta(mainarticle_hrefs)
-        articles.extend(dict_mainarticle)
-        
-    #Get Basic Teasers
-    site_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='basicTeaser')
-    site_articles = extract_basic_article_meta(site_div_elements)
-    articles.extend(site_articles)
-        
-
-    #Untere Newsbalken
-    autTop_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='autoTopicTeaser')
-    hrefs.extend(get_hrefs_of_tags(autTop_div_elements))
-
-
-    #Redaktionsempfehlung
-    artDetT_div_elements = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='articleDetailTeaser')
-    redaktions_empfehlungen = get_hrefs_of_tags(artDetT_div_elements)
-    hrefs.extend(redaktions_empfehlungen)
-
-    #Am meisten gelesen
-    contentListTeaser = partialfind_term_in_bstag_attr(divs_body, search_in_attr='class', searchterm='articleDetailTeaser')
-    meistgelesen = get_hrefs_of_tags(contentListTeaser)
-    hrefs.extend(meistgelesen)
-
     hrefs = list(set(hrefs))
     hrefs = [href for href in hrefs if not check_ref_is_a_dwhomepage(href)]
     extracted_hrefs = [article['url'] for article in articles]
@@ -174,20 +135,6 @@ def scrape_dw_theme_page(html:str):
         articles.append(new_article_meta)
         
         
-    for href in meistgelesen:
-        articles = add_value_to_article_key(articles, 
-                                'meistgelesen', 
-                                val = True, 
-                                searchval = href,
-                                searchkey = 'url')
-
-    for href in redaktions_empfehlungen:
-        articles = add_value_to_article_key(articles, 
-                            'redaktionsempfehlung', 
-                            val = True, 
-                            searchval = href,
-                            searchkey = 'url')
-
     #Remove double articles
     new_content, double_hrefs = remove_double_entrys_in_article(articles)
 
