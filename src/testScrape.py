@@ -41,10 +41,10 @@ if __name__ == "__main__":
 
     for idx, art in enumerate(extracted_articles):
         
-        proxy = choose_proxy_from_proxyrotation(local_request=slug.local_request,
-                                                get_html_via_tor=slug.get_html_via_tor,
-                                                get_html_via_webscrapingapi=slug.get_html_via_webscrapingapi,
-                                                get_html_via_scrapingapi=slug.get_html_via_scrapingapi) 
+        proxy = choose_proxy_from_proxyrotation(local_request=1.0,
+                                                get_html_via_tor=0.0,
+                                                get_html_via_webscrapingapi=0.0,
+                                                get_html_via_scrapingapi=0.0)    # load a proxy for consistency of code
     
         
 

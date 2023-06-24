@@ -4,8 +4,11 @@ from datetime import datetime
 import dateutil
 import json
 import unicodedata
+import requests
 from dw.mainpage import find_term_in_bstag_attr, partialfind_term_in_bstag_attr
-from utils.textrank import TextRank4Keyword
+
+
+textrankurl = "http://stephanscorner.de/textrank"
 
 
 def get_article_text(longtext: element.ResultSet):
@@ -102,13 +105,21 @@ def extract_article_data(article: dict, html:str):
             content.append(unicodedata.normalize("NFKD", p.text).replace("nob/uh (dpa, afp)",""))           
     
     if len(content) > 0:      
-        articletxt = ". ".join(content)                      
-        rank = TextRank4Keyword()
-        rank.analyze(articletxt, 
-                        candidate_pos=['NOUN', 'PROPN'], 
-                        window_size=4, lower=False, stopwords=list())
+        articletxt = ". ".join(content)    
+        
+        # Check get statement
+        postdata = [
+            {'targetText': articletxt}
+        ]
 
-        keywords=rank.get_keywords(number=8)
+        r = requests.post(textrankurl, json=postdata) #textrankurl = "http://stephanscorner.de/textrank"
+
+        keywords = ["ERROR"]
+        
+        for entry in json.loads(r.content):
+            if "Keywords" in entry.keys():
+                keywords=entry["Keywords"]
+                
         article['Schlagwörter'] = keywords   
   
     #DONT DELETE!!!!!
