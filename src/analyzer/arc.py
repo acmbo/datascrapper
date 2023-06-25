@@ -5,6 +5,8 @@ from datetime import datetime
 
 import networkx as nx
 
+#sys.path.append('/home/pi/programming/datascrapper/src')
+
 # For dev purposes, so you can find db.redis
 path = Path(__file__)
 if path.parent.name == 'analyzer':
@@ -617,8 +619,8 @@ class Analyzer:
         responses["Post Graph Monthly"]  = self.send_graph_to_api(endpoint="themeGraphMonthly/", internal=False, get_themes=True)
         responses["Post Graph Weekly"]  = self.send_graph_to_api(endpoint="themeGraphWeekly/", internal=False, get_themes=True)
         
-        responses["theme autor data Weekly"] = self.send_theme_autor_data(internal=False, endpoint = "usedthemesWeekly/")
-        responses["theme autor data Monthly"] = self.send_theme_autor_data(internal=False, endpoint = "usedthemesMonthly/")
+        #responses["theme autor data Weekly"] = self.send_theme_autor_data(internal=False, endpoint = "usedthemesWeekly/")
+        #responses["theme autor data Monthly"] = self.send_theme_autor_data(internal=False, endpoint = "usedthemesMonthly/")
 
         #responses["Testdata"] = self.send_theme_autor_data(internal=False, daydelta=7)
         return responses

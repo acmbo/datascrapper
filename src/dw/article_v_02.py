@@ -86,9 +86,9 @@ def extract_article_data(article: dict, html:str):
     for entry in partialfind_term_in_bstag_attr(scripts,'type','application/ld+json'):
         res = json.loads(entry.string)
         if "uploadDate" in res.keys():
-            article["Datum"] = dateutil.parser.isoparse(res["uploadDate"]).strftime("%Y-%m-%d")
+            article["Datum"] = dateutil.parser.isoparse(res["uploadDate"]).strftime("%d.%m.%Y")
         if "datePublished" in res.keys():
-            article["Datum"] = dateutil.parser.isoparse(res["datePublished"]).strftime("%Y-%m-%d")
+            article["Datum"] = dateutil.parser.isoparse(res["datePublished"]).strftime("%d.%m.%Y")
         if "author" in res.keys():
             article['Autorin/Autor'] = [aut["name"] for aut in res["author"]]
         

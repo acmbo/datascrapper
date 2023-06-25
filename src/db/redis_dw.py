@@ -161,7 +161,7 @@ def delete_single_key(db, url):
     return 0
 
 
-def create_json(db):
+def create_json(db, filename = "redis_db_BU.json"):
     import json
     db_keys = get_all_dw_article(db)
     db_data = {}
@@ -175,7 +175,7 @@ def create_json(db):
         except:
             print("invalid Key: ", str(key))
     #return db_data 
-    with open("redis_db_BU.json", "w") as outfile:
+    with open(filename, "w") as outfile:
         json.dump(db_data, outfile)    
         
         
