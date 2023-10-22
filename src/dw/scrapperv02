@@ -1,0 +1,243 @@
+from random import randint
+import requests
+import time 
+#from dw.mainpage import get_empty_article_meta_data
+from bs4 import BeautifulSoup as bs
+import re
+from datetime import datetime
+from tqdm import tqdm
+
+def get_empty_article_meta_data():
+    """returns dictionary for meta data storage of article
+    Returns:
+        dict: meta data dictionary of article
+    """
+    dict_article_structure = {
+    'url':'',
+    'title':'',
+    'subtitle':'',
+    'abstract':'',
+    'image_title': '',
+    'mainarticle': False,
+    'video': False,
+    'meistgelesen':False,
+    'redaktionsempfehlung':False,
+    'Datum':'',
+    'Autorin/Autor':'',
+    'Permalink':'',
+    'Themenseiten':'',
+    'Schlagwörter':'',
+    'Artikel':'',
+    'occured_date':'',  #new entry
+    }
+    return dict_article_structure.copy()
+
+
+def get_ready_soup_html(url:str):
+    """_summary_
+
+    Args:
+        url (str):str of url
+
+    Returns:
+        soup: soup of beatiful soup, ready html for further analysis
+    """
+    try:
+        req =  requests.get(url)
+        soup = bs(req.text, features="html.parser")
+        return soup
+    
+    except Exception as e:
+        print("ERROR: ", e)
+        return None
+
+
+def get_all_hrefs_from_page(soup, add_root_page: str = ""):
+    """Returns a list of urls ready for use
+
+    Args:
+        soup (bs4.soup): soup of html
+
+    Returns:
+        list: list of urls
+    """
+    # get all links
+    hrefs = [link.get('href') for link in soup.find_all('a') ]
+    # Removes external links
+    hrefs = [href for href in hrefs if href != '' and href != None and href[0] == "/"]
+    #adds a root page to all hrefs
+    if add_root_page != "":
+        hrefs = [add_root_page + href for href in hrefs]
+        
+    hrefs = list(dict.fromkeys(hrefs)) # remove duplicates
+    
+    hrefs = [href for href in hrefs if href.split("/")[1] == "de"]
+    
+    return hrefs
+
+
+
+def get_content(soup, tag: str, props: dict):
+    """get content from a bs4 query. 
+    Query example: soup.head.find("meta", {"property":"og:type1"})
+
+    Args:
+        soup (bs4.soup): soup of html
+        tag (str): html tag
+        porps (dict): propetry to search for
+
+    Returns:
+        str: content as string
+    """
+    if soup.find(tag, props):
+        
+        if "content" in soup.find(tag, props).attrs:
+            return soup.find(tag, props)["content"]
+    return ""
+
+
+def check_ref_is_a_dwhomepage(href: str):
+    """
+    checks if dw href link ends with a Tag like "s-1239142". "s" Tag indicates, that a page is a homepage or themepage. Articles are 
+    marked with "a". Videos with "av".
+     
+    Args:
+        href (str): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    if href != "":
+        content = href.split("/")
+        article_Tag = content[len(content)-1][0]
+        
+        if article_Tag == "s":
+            return True
+        else:
+            return False
+        
+
+base_url = "https://www.dw.com/de"
+
+visited_articles = []
+known_article_sections = ["https://www.dw.com/de/themen/s-9077"]
+found_articles = []
+data = []
+
+found_articles.extend(known_article_sections)
+
+
+i = 0
+article_idx = len(found_articles)
+
+while i <= article_idx:
+
+    print(f"{i} href of {article_idx}")
+    print(" Unique articles: ", len(list(dict.fromkeys(found_articles))))
+    time.sleep(3)
+
+    href = found_articles[i]
+    
+    i+=1
+    
+    print(href)
+    
+    if href not in visited_articles:
+        
+        visited_articles.append(href)
+        
+        # Option if website is a homepage
+        if check_ref_is_a_dwhomepage(href) or href == base_url:
+            
+            soup = get_ready_soup_html(base_url + href)
+
+            if soup:
+                
+                    
+                if href not in known_article_sections:
+                    known_article_sections.append(href)
+                
+                
+                for _url in get_all_hrefs_from_page(soup):
+                    
+                    if _url not in found_articles:
+                        
+                        found_articles.append(_url)
+                        article_idx +=1
+                
+                print(f"changed article_idx to {article_idx}")
+                
+        #Option if website is a article:
+        else:
+            
+            
+            soup = get_ready_soup_html(base_url + href)
+
+            if soup:
+                article: dict = get_empty_article_meta_data()
+                                
+                article['url'] = href
+                
+                article['occured_date'] = datetime.now().isoformat() 
+
+                for li in soup.find_all("li"):
+                    
+                    if "Datum" in li.text:
+                        pattern: str = "[0-1]?[0-9].[0-9]{2}.[0-9]{4}"
+                        art_date: list = re.findall(pattern, li.text)
+                        
+                        if len(art_date)==1:
+                            article["Datum"] = art_date[0]
+                            
+                    if 'Themenseiten' in li.text:
+                        
+                        found_themes: list = []
+                        
+                        for a in li.findAll("a"):
+                            found_themes.append((a.text, a["href"]))
+                            
+                        article['Themenseiten'] = found_themes
+                    
+                    if 'Permalink' in li.text:
+                        
+                        found_li = li
+                        for i, c in enumerate(li.contents):
+
+                            if "Permalink" in c.text:
+                                try:
+                                    article['Permalink'] = li.contents[i+1].replace("\n","")
+                                except:
+                                    print("No Autor found")
+                    
+                        
+                    if 'Schlagwörter' in li.text:
+                        
+                        found_key: list = []
+                        
+                        for a in li.findAll("a"):
+                            found_key.append((a.text, a["href"]))
+                        article['Schlagwörter'] = found_key
+                    
+                    if "Autorin" in li.text or "Autor" in li.text:
+
+                        for i, c in enumerate(li.contents):
+
+                            if "Autorin" in c.text or "Autor" in c.text:
+                                try:
+                                    article['Autorin/Autor'] = li.contents[i+1].replace("\n","")
+                                except:
+                                    print("No Autor found")
+
+
+
+
+                article['abstract'] = get_content(soup, "meta",  {"name":"description"})
+                article['title'] = soup.find("title").text
+
+                url = href
+
+                if len(url.split("/")) > 0:
+                    if "av" in url.split("/")[len(url.split("/"))-1]:
+                        article["video"]=True 
+                        
+                data.append(article)

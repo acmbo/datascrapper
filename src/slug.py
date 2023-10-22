@@ -185,6 +185,39 @@ def execute_get_request_article(proxy_func, _url_source, article, _db, extracted
         return 1, extracted_articles
 
 
+def crawl_spiegel():
+    """crwals spiegel front page and article pages and add articles as html and textformat to a mongodb
+    """
+    
+    logger.info("Start new SPIEGEL Crawl")
+    
+    meta = {}
+
+    
+    meta["StartTime"] = get_actual_datetime().isoformat()
+    meta["Articles"] = 0
+    meta["Scrapper"] = "Raspberry Pi 2+"
+    meta["Errors"] = 0
+    
+
+    #Conect to redisdb and preqesiuts
+    db = get_db(db_number=2) 
+    
+    db.bgsave()
+    
+    # Send Data to api if website
+    
+    logger.info("End of Crawl SPIEGEL")
+    json_string = json.dumps(meta)
+    
+    with open("scrapper_meta_Spiegel.json", "w") as i :
+        json.dump(json_string, i, default=str)
+        
+    logger.info("Write to json")
+    
+    
+    
+
 def crawl_dw():
     """crwals dw front page and article pages and add articles as html and textformat to a mongodb
     """
